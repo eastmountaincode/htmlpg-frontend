@@ -21,13 +21,13 @@ function SessionInfo({ expiresAt, shareUrl }: { expiresAt: number; shareUrl: str
     };
 
     return (
-        <div className="bg-gray-100 rounded mx-5 mt-3 px-3 py-2">
+        <div className="max-w-sm mx-auto bg-gray-100 rounded mt-3 px-3 py-2">
             <div className="text-center">
                 <SessionCountdown expiresAt={expiresAt} />
             </div>
             {shareUrl && (
-                <div className="flex items-center gap-2 mt-1">
-                    <p className="text-xs font-mono text-gray-400 truncate min-w-0">{shareUrl}</p>
+                <div className="flex items-center justify-center gap-2 mt-1 overflow-hidden">
+                    <p className="text-xs font-mono text-gray-400 truncate">{shareUrl}</p>
                     <button
                         onClick={handleCopy}
                         className="text-xs px-2 py-0.5 bg-gray-200 hover:bg-gray-300 text-gray-500 rounded cursor-pointer shrink-0"

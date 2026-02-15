@@ -1,14 +1,20 @@
 import { createHmac } from "crypto";
 import { cookies } from "next/headers";
+import { QR_INTERVAL_SECONDS } from "./qr-token";
 
 export const SESSION_COOKIE_NAME = "htmlpg_session";
-const SESSION_TTL_SECONDS = 60; // 60 seconds (testing — change back to 30 * 60 for production)
+
+function getTimeSlotExpiry(): number {
+  const now = Math.floor(Date.now() / 1000);
+  const currentSlot = Math.floor(now / QR_INTERVAL_SECONDS);
+  return (currentSlot + 1) * QR_INTERVAL_SECONDS;
+}
 
 export function createSessionValue(
   sessionSecret: string,
   deviceId: string
 ): string {
-  const exp = Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS;
+  const exp = getTimeSlotExpiry();
   const payload = `${deviceId}.${exp}`;
   const sig = createHmac("sha256", sessionSecret).update(payload).digest("hex");
   return `${payload}.${sig}`;
@@ -43,12 +49,14 @@ export function validateSessionValue(
 export async function setSessionCookie(deviceId: string): Promise<void> {
   const secret = process.env.SESSION_SECRET!;
   const value = createSessionValue(secret, deviceId);
+  const now = Math.floor(Date.now() / 1000);
+  const exp = getTimeSlotExpiry();
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE_NAME, value, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: SESSION_TTL_SECONDS,
+    maxAge: exp - now,
   });
 }

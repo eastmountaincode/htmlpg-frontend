@@ -31,7 +31,7 @@ export default function SessionCountdown({ expiresAt }: SessionCountdownProps) {
     const seconds = secondsLeft % 60;
     const display = `${minutes}:${seconds.toString().padStart(2, '0')}`;
     return (
-        <p className="text-xs text-gray-500">
+        <p className="text-sm text-gray-500" suppressHydrationWarning>
             session {display}
         </p>
     );
