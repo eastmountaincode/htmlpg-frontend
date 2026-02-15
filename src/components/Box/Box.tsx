@@ -21,6 +21,11 @@ export default function Box({ boxNumber, onRegisterCallback }: BoxProps) {
             setLoading(true);
             const response = await fetch(`/api/boxes/${boxNumber}/files`);
 
+            if (response.redirected) {
+                window.location.href = '/denied';
+                return;
+            }
+
             if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error(`API returned ${response.status}: ${response.statusText}. Body: ${errorText}`);
@@ -51,13 +56,26 @@ export default function Box({ boxNumber, onRegisterCallback }: BoxProps) {
 
         try {
             const url = `/api/boxes/${boxNumber}/files/${encodeURIComponent(boxStatus.name)}`;
+            const response = await fetch(url);
+
+            if (response.redirected) {
+                window.location.href = '/denied';
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error(`Download failed: ${response.status}`);
+            }
+
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
             const link = document.createElement('a');
-            link.href = url;
+            link.href = blobUrl;
             link.download = boxStatus.name;
-            link.rel = 'noopener';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            URL.revokeObjectURL(blobUrl);
 
             setTimeout(() => {
                 fetchBoxStatus();

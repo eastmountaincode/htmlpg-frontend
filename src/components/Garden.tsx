@@ -2,9 +2,14 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 import Box from './Box/Box';
+import SessionCountdown from './SessionCountdown';
 import { getPusherClient } from '@/lib/pusher-client';
 
-export default function Garden() {
+interface GardenProps {
+    sessionExpiresAt: number | null;
+}
+
+export default function Garden({ sessionExpiresAt }: GardenProps) {
     const boxUpdateCallbacks = useRef<{ [boxNumber: number]: () => void }>({});
 
     useEffect(() => {
@@ -58,6 +63,7 @@ export default function Garden() {
                     HTMLPG <br />
                     ❋ ❃ ❁ ❀ ✿
                 </h2>
+                {sessionExpiresAt && <SessionCountdown expiresAt={sessionExpiresAt} />}
             </div>
             <div className="pt-[10px] pb-[40px] space-y-[30px]">
                 <Box boxNumber={1} onRegisterCallback={registerBoxCallback} />

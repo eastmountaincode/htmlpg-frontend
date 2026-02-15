@@ -55,6 +55,10 @@ export default function UploadForm({ boxNumber, uploadDisabled, receiveDisabled,
                     'Content-Type': 'application/json',
                 },
             });
+            if (presignResponse.redirected) {
+                window.location.href = '/denied';
+                return;
+            }
             if (!presignResponse.ok) throw new Error('Failed to get presigned URL');
             const { url, key } = await presignResponse.json();
 
@@ -88,7 +92,7 @@ export default function UploadForm({ boxNumber, uploadDisabled, receiveDisabled,
 
             console.log('File uploaded successfully', key);
 
-            await fetch(`/api/boxes/${boxNumber}/events`, {
+            const eventResponse = await fetch(`/api/boxes/${boxNumber}/events`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -97,6 +101,10 @@ export default function UploadForm({ boxNumber, uploadDisabled, receiveDisabled,
                     fileSize: selectedFile.size
                 })
             });
+            if (eventResponse.redirected) {
+                window.location.href = '/denied';
+                return;
+            }
 
             setSelectedFile(null);
             if (inputRef.current) {
