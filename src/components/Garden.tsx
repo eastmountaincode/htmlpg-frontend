@@ -1,15 +1,34 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import Box from './Box/Box';
 import SessionCountdown from './SessionCountdown';
 import { getPusherClient } from '@/lib/pusher-client';
 
 interface GardenProps {
     sessionExpiresAt: number | null;
+    shareUrl: string | null;
 }
 
-export default function Garden({ sessionExpiresAt }: GardenProps) {
+function ShareLink({ url }: { url: string }) {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = async () => {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    return (
+        <p className="text-xs text-center text-gray-400 mt-1">
+            <button onClick={handleCopy} className="hover:underline cursor-pointer">
+                {copied ? 'copied!' : 'copy link for another device'}
+            </button>
+        </p>
+    );
+}
+
+export default function Garden({ sessionExpiresAt, shareUrl }: GardenProps) {
     const boxUpdateCallbacks = useRef<{ [boxNumber: number]: () => void }>({});
 
     useEffect(() => {
@@ -64,6 +83,7 @@ export default function Garden({ sessionExpiresAt }: GardenProps) {
                     ❋ ❃ ❁ ❀ ✿
                 </h2>
                 {sessionExpiresAt && <SessionCountdown expiresAt={sessionExpiresAt} />}
+                {shareUrl && <ShareLink url={shareUrl} />}
             </div>
             <div className="pt-[10px] pb-[40px] space-y-[30px]">
                 <Box boxNumber={1} onRegisterCallback={registerBoxCallback} />

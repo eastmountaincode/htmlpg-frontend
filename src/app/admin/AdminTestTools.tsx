@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import { clearSession, generateTestUrl } from './actions';
 
 export default function AdminTestTools() {
@@ -66,6 +67,10 @@ export default function AdminTestTools() {
           >
             {fullUrl}
           </a>
+
+          <div className="mt-3 pt-3 border-t border-gray-200 flex justify-center">
+            <QRCodeSVG value={fullUrl} size={200} />
+          </div>
 
           <div className="mt-3 pt-3 border-t border-gray-200">
             <span className="text-gray-500 font-medium">Test invalid URL:</span>
