@@ -21,19 +21,20 @@ function SessionInfo({ expiresAt, shareUrl }: { expiresAt: number; shareUrl: str
     };
 
     return (
-        <div className="bg-gray-100 rounded mx-5 mt-3 px-4 py-3">
-            <SessionCountdown expiresAt={expiresAt} />
-            {shareUrl && (
-                <div className="mt-2 text-center">
-                    <p className="text-xs text-gray-400 mb-1">share this link to join from another device</p>
-                    <p className="text-xs font-mono text-gray-500 break-all select-all">{shareUrl}</p>
+        <div className="bg-gray-100 rounded mx-5 mt-3 px-3 py-2">
+            <div className="flex items-center justify-between">
+                <SessionCountdown expiresAt={expiresAt} />
+                {shareUrl && (
                     <button
                         onClick={handleCopy}
-                        className="text-xs text-gray-400 hover:text-gray-600 mt-1 cursor-pointer"
+                        className="text-xs px-2 py-0.5 bg-gray-200 hover:bg-gray-300 text-gray-500 rounded cursor-pointer shrink-0"
                     >
-                        {copied ? 'copied!' : 'copy'}
+                        {copied ? 'copied!' : 'copy link'}
                     </button>
-                </div>
+                )}
+            </div>
+            {shareUrl && (
+                <p className="text-xs font-mono text-gray-400 break-all select-all mt-1">{shareUrl}</p>
             )}
         </div>
     );

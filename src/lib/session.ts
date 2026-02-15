@@ -2,7 +2,7 @@ import { createHmac } from "crypto";
 import { cookies } from "next/headers";
 
 export const SESSION_COOKIE_NAME = "htmlpg_session";
-const SESSION_TTL_SECONDS = 30; // 30 seconds (testing — change back to 30 * 60 for production)
+const SESSION_TTL_SECONDS = 60; // 60 seconds (testing — change back to 30 * 60 for production)
 
 export function createSessionValue(
   sessionSecret: string,
