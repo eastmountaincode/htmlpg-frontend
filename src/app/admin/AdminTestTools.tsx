@@ -7,9 +7,10 @@ import SessionCountdown from '@/components/SessionCountdown';
 
 interface AdminTestToolsProps {
   sessionInfo: { deviceId: string; exp: number } | null;
+  timeSlotExpiry: number;
 }
 
-export default function AdminTestTools({ sessionInfo }: AdminTestToolsProps) {
+export default function AdminTestTools({ sessionInfo, timeSlotExpiry }: AdminTestToolsProps) {
   const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -38,13 +39,10 @@ export default function AdminTestTools({ sessionInfo }: AdminTestToolsProps) {
   return (
     <div>
       <div className="mb-3">
-        {sessionInfo ? (
-          <p className="text-sm text-gray-600">
-            Session active — device: {sessionInfo.deviceId}, <SessionCountdown expiresAt={sessionInfo.exp} />
-          </p>
-        ) : (
-          <p className="text-sm text-gray-600">No active session</p>
-        )}
+        <div className="text-sm text-gray-600">
+          <SessionCountdown expiresAt={timeSlotExpiry} />
+          {sessionInfo && <span className="ml-2">— device: {sessionInfo.deviceId}</span>}
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2 mb-3">

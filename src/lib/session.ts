@@ -4,7 +4,7 @@ import { QR_INTERVAL_SECONDS } from "./qr-token";
 
 export const SESSION_COOKIE_NAME = "htmlpg_session";
 
-function getTimeSlotExpiry(): number {
+export function getTimeSlotExpiry(): number {
   const now = Math.floor(Date.now() / 1000);
   const currentSlot = Math.floor(now / QR_INTERVAL_SECONDS);
   return (currentSlot + 1) * QR_INTERVAL_SECONDS;

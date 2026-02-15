@@ -3,7 +3,7 @@ import {
   GetObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getR2, R2_BUCKET } from "@/lib/r2";
-import { validateSessionValue, SESSION_COOKIE_NAME } from "@/lib/session";
+import { validateSessionValue, SESSION_COOKIE_NAME, getTimeSlotExpiry } from "@/lib/session";
 import { cookies } from "next/headers";
 import AdminTestTools from "./AdminTestTools";
 
@@ -105,6 +105,7 @@ async function getSessionInfo(): Promise<{ deviceId: string; exp: number } | nul
 export default async function AdminPage() {
   const devices = await getDeviceHealth();
   const sessionInfo = await getSessionInfo();
+  const timeSlotExpiry = getTimeSlotExpiry();
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -115,7 +116,7 @@ export default async function AdminPage() {
         <div className="mb-8 bg-white shadow-sm rounded-lg p-4">
           <h2 className="text-lg font-semibold mb-3">Test Tools</h2>
 
-          <AdminTestTools sessionInfo={sessionInfo} />
+          <AdminTestTools sessionInfo={sessionInfo} timeSlotExpiry={timeSlotExpiry} />
         </div>
 
         {/* Device Status */}
