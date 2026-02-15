@@ -10,21 +10,32 @@ interface GardenProps {
     shareUrl: string | null;
 }
 
-function ShareLink({ url }: { url: string }) {
+function SessionInfo({ expiresAt, shareUrl }: { expiresAt: number; shareUrl: string | null }) {
     const [copied, setCopied] = useState(false);
 
     const handleCopy = async () => {
-        await navigator.clipboard.writeText(url);
+        if (!shareUrl) return;
+        await navigator.clipboard.writeText(shareUrl);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
 
     return (
-        <p className="text-xs text-center text-gray-400 mt-1">
-            <button onClick={handleCopy} className="hover:underline cursor-pointer">
-                {copied ? 'copied!' : 'copy link for another device'}
-            </button>
-        </p>
+        <div className="bg-gray-100 rounded mx-5 mt-3 px-4 py-3">
+            <SessionCountdown expiresAt={expiresAt} />
+            {shareUrl && (
+                <div className="mt-2 text-center">
+                    <p className="text-xs text-gray-400 mb-1">share this link to join from another device</p>
+                    <p className="text-xs font-mono text-gray-500 break-all select-all">{shareUrl}</p>
+                    <button
+                        onClick={handleCopy}
+                        className="text-xs text-gray-400 hover:text-gray-600 mt-1 cursor-pointer"
+                    >
+                        {copied ? 'copied!' : 'copy'}
+                    </button>
+                </div>
+            )}
+        </div>
     );
 }
 
@@ -82,8 +93,7 @@ export default function Garden({ sessionExpiresAt, shareUrl }: GardenProps) {
                     HTMLPG <br />
                     ❋ ❃ ❁ ❀ ✿
                 </h2>
-                {sessionExpiresAt && <SessionCountdown expiresAt={sessionExpiresAt} />}
-                {shareUrl && <ShareLink url={shareUrl} />}
+                {sessionExpiresAt && <SessionInfo expiresAt={sessionExpiresAt} shareUrl={shareUrl} />}
             </div>
             <div className="pt-[10px] pb-[40px] space-y-[30px]">
                 <Box boxNumber={1} onRegisterCallback={registerBoxCallback} />
