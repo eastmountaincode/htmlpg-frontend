@@ -3,7 +3,6 @@ import {
   GetObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getR2, R2_BUCKET } from "@/lib/r2";
-import { generateQrToken } from "@/lib/qr-token";
 import { validateSessionValue, SESSION_COOKIE_NAME } from "@/lib/session";
 import { cookies } from "next/headers";
 import AdminTestTools from "./AdminTestTools";
@@ -105,18 +104,9 @@ async function getSessionInfo(): Promise<{ deviceId: string; minutesRemaining: n
   return { deviceId: result.deviceId, minutesRemaining };
 }
 
-function generateTestQrUrl(): string | null {
-  const secret = process.env.QR_SECRET;
-  if (!secret) return null;
-  const deviceId = "test";
-  const token = generateQrToken(secret, deviceId);
-  return `/v/${deviceId}/${token}`;
-}
-
 export default async function AdminPage() {
   const devices = await getDeviceHealth();
   const sessionInfo = await getSessionInfo();
-  const testQrUrl = generateTestQrUrl();
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
@@ -136,7 +126,7 @@ export default async function AdminPage() {
             </p>
           </div>
 
-          <AdminTestTools testQrUrl={testQrUrl} />
+          <AdminTestTools />
         </div>
 
         {/* Device Status */}
