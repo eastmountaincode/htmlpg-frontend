@@ -6,9 +6,10 @@ import { useRouter } from 'next/navigation';
 interface SessionCountdownProps {
     expiresAt: number; // Unix seconds
     intervalSeconds?: number; // If set, auto-roll to next slot on expiry instead of redirecting
+    onSlotChange?: () => void; // Called when time slot rolls over (only with intervalSeconds)
 }
 
-export default function SessionCountdown({ expiresAt, intervalSeconds }: SessionCountdownProps) {
+export default function SessionCountdown({ expiresAt, intervalSeconds, onSlotChange }: SessionCountdownProps) {
     const router = useRouter();
     const currentExpiry = useRef(expiresAt);
     const [secondsLeft, setSecondsLeft] = useState(() => {
@@ -31,6 +32,7 @@ export default function SessionCountdown({ expiresAt, intervalSeconds }: Session
                     const nextSlot = Math.floor(now / intervalSeconds) + 1;
                     currentExpiry.current = nextSlot * intervalSeconds;
                     setSecondsLeft(currentExpiry.current - now);
+                    onSlotChange?.();
                 } else {
                     clearInterval(interval);
                     router.push('/denied');

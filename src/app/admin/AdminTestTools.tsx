@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { clearSession, generateTestUrl } from './actions';
 import SessionCountdown from '@/components/SessionCountdown';
@@ -15,17 +15,21 @@ export default function AdminTestTools({ sessionInfo, timeSlotExpiry, intervalSe
   const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
+  // Auto-generate URL on mount
+  useEffect(() => {
+    generateTestUrl().then(setGeneratedUrl);
+  }, []);
+
   const handleClearSession = async () => {
     await clearSession();
-    setGeneratedUrl(null);
     window.location.reload();
   };
 
-  const handleGenerateUrl = async () => {
+  const handleSlotChange = useCallback(async () => {
     const url = await generateTestUrl();
     setGeneratedUrl(url);
     setCopied(false);
-  };
+  }, []);
 
   const handleCopy = async (text: string) => {
     await navigator.clipboard.writeText(text);
@@ -41,7 +45,7 @@ export default function AdminTestTools({ sessionInfo, timeSlotExpiry, intervalSe
     <div>
       <div className="mb-3">
         <div className="text-sm text-gray-600">
-          <SessionCountdown expiresAt={timeSlotExpiry} intervalSeconds={intervalSeconds} />
+          <SessionCountdown expiresAt={timeSlotExpiry} intervalSeconds={intervalSeconds} onSlotChange={handleSlotChange} />
           {sessionInfo && <span className="ml-2">— device: {sessionInfo.deviceId}</span>}
         </div>
       </div>
@@ -52,13 +56,6 @@ export default function AdminTestTools({ sessionInfo, timeSlotExpiry, intervalSe
           className="px-3 py-1.5 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 cursor-pointer"
         >
           Clear Session
-        </button>
-
-        <button
-          onClick={handleGenerateUrl}
-          className="px-3 py-1.5 text-sm bg-green-100 text-green-700 rounded hover:bg-green-200 cursor-pointer"
-        >
-          Generate Test QR URL
         </button>
       </div>
 
