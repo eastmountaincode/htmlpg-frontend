@@ -10,7 +10,7 @@ export function generateQrToken(
 ): string {
   const timeSlot = Math.floor(timestampSeconds / QR_INTERVAL_SECONDS);
   const message = `${deviceId}${timeSlot}`;
-  return createHmac("sha256", secret).update(message).digest("hex");
+  return createHmac("sha256", secret).update(message).digest("hex").slice(0, 16);
 }
 
 export function validateQrToken(
