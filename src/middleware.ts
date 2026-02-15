@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateSessionValue, SESSION_COOKIE_NAME } from "@/lib/session";
+import { ADMIN_COOKIE_NAME, validateAdminCookie } from "@/lib/admin-session";
 
 export const runtime = "nodejs";
 
@@ -13,9 +14,23 @@ export function middleware(request: NextRequest) {
 
   // Routes that bypass session check
   if (pathname.startsWith("/v/")) return NextResponse.next();
-  if (pathname === "/admin" || pathname.startsWith("/admin/")) return NextResponse.next();
   if (pathname === "/denied") return NextResponse.next();
   if (pathname.startsWith("/api/")) return NextResponse.next(); // API routes used by devices
+
+  // Admin routes — password-protected via admin cookie
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) {
+    // Login page is always accessible
+    if (pathname === "/admin/login") return NextResponse.next();
+
+    const adminCookie = request.cookies.get(ADMIN_COOKIE_NAME)?.value;
+    const sessionSecret = process.env.SESSION_SECRET;
+
+    if (!sessionSecret || !adminCookie || !validateAdminCookie(sessionSecret, adminCookie)) {
+      return NextResponse.redirect(new URL("/admin/login", request.url));
+    }
+
+    return NextResponse.next();
+  }
 
   // Session validation for all other routes
   const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME)?.value;
