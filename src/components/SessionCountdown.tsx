@@ -30,10 +30,8 @@ export default function SessionCountdown({ expiresAt }: SessionCountdownProps) {
     const minutes = Math.floor(secondsLeft / 60);
     const seconds = secondsLeft % 60;
     const display = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    const urgent = secondsLeft <= 60;
-
     return (
-        <p className={`text-sm text-center ${urgent ? 'text-red-600' : 'text-gray-500'}`}>
+        <p className="text-sm text-center text-gray-500">
             session expires in {display}
         </p>
     );
