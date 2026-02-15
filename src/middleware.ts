@@ -15,7 +15,7 @@ export function middleware(request: NextRequest) {
   if (pathname.startsWith("/v/")) return NextResponse.next();
   if (pathname === "/admin" || pathname.startsWith("/admin/")) return NextResponse.next();
   if (pathname === "/denied") return NextResponse.next();
-  if (pathname === "/api/devices/health") return NextResponse.next();
+  if (pathname.startsWith("/api/")) return NextResponse.next(); // API routes used by devices
 
   // Session validation for all other routes
   const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME)?.value;
