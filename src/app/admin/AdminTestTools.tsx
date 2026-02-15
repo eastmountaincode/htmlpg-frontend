@@ -3,8 +3,13 @@
 import { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { clearSession, generateTestUrl } from './actions';
+import SessionCountdown from '@/components/SessionCountdown';
 
-export default function AdminTestTools() {
+interface AdminTestToolsProps {
+  sessionInfo: { deviceId: string; exp: number } | null;
+}
+
+export default function AdminTestTools({ sessionInfo }: AdminTestToolsProps) {
   const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -32,6 +37,16 @@ export default function AdminTestTools() {
 
   return (
     <div>
+      <div className="mb-3">
+        {sessionInfo ? (
+          <p className="text-sm text-gray-600">
+            Session active — device: {sessionInfo.deviceId}, <SessionCountdown expiresAt={sessionInfo.exp} />
+          </p>
+        ) : (
+          <p className="text-sm text-gray-600">No active session</p>
+        )}
+      </div>
+
       <div className="flex flex-wrap gap-2 mb-3">
         <button
           onClick={handleClearSession}

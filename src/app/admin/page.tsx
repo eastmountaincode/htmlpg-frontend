@@ -88,7 +88,7 @@ function StatusDot({ connected, stale }: { connected: boolean; stale: boolean })
   );
 }
 
-async function getSessionInfo(): Promise<{ deviceId: string; minutesRemaining: number } | null> {
+async function getSessionInfo(): Promise<{ deviceId: string; exp: number } | null> {
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME)?.value;
   if (!sessionCookie) return null;
@@ -99,9 +99,7 @@ async function getSessionInfo(): Promise<{ deviceId: string; minutesRemaining: n
   const result = validateSessionValue(secret, sessionCookie);
   if (!result.valid) return null;
 
-  const now = Math.floor(Date.now() / 1000);
-  const minutesRemaining = Math.max(0, Math.round((result.exp - now) / 60));
-  return { deviceId: result.deviceId, minutesRemaining };
+  return { deviceId: result.deviceId, exp: result.exp };
 }
 
 export default async function AdminPage() {
@@ -117,16 +115,7 @@ export default async function AdminPage() {
         <div className="mb-8 bg-white shadow-sm rounded-lg p-4">
           <h2 className="text-lg font-semibold mb-3">Test Tools</h2>
 
-          {/* Session Info */}
-          <div className="mb-3">
-            <p className="text-sm text-gray-600">
-              {sessionInfo
-                ? `Session active — device: ${sessionInfo.deviceId}, ${sessionInfo.minutesRemaining} min remaining`
-                : "No active session"}
-            </p>
-          </div>
-
-          <AdminTestTools />
+          <AdminTestTools sessionInfo={sessionInfo} />
         </div>
 
         {/* Device Status */}
