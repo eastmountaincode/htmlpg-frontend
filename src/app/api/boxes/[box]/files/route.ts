@@ -1,4 +1,4 @@
-import { ListObjectsV2Command, PutObjectCommand } from "@aws-sdk/client-s3";
+import { ListObjectsV2Command, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { NextRequest, NextResponse } from "next/server";
 import { getR2, R2_BUCKET } from "@/lib/r2";
@@ -7,7 +7,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-// GET /api/boxes/:box/files - List files in a box
+// GET /api/boxes/:box/files - List files in a box (with metadata)
 export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ box: string }> }
@@ -32,9 +32,10 @@ export async function GET(
             return NextResponse.json({ empty: true });
         }
 
+        // Filter out meta files and empty entries
         const actualFiles = data.Contents.filter(obj => {
             const key = obj.Key || "";
-            return !key.endsWith('/') && (obj.Size || 0) > 0;
+            return !key.endsWith('/') && !key.endsWith('.meta.json') && (obj.Size || 0) > 0;
         });
 
         if (actualFiles.length === 0) {
@@ -44,10 +45,30 @@ export async function GET(
         const file = actualFiles[0];
         const fileName = file.Key?.replace(prefix, "") || "";
 
+        // Try to fetch metadata sidecar
+        let source = null;
+        try {
+            const metaKey = `${file.Key}.meta.json`;
+            const metaResponse = await getR2().send(
+                new GetObjectCommand({
+                    Bucket: R2_BUCKET,
+                    Key: metaKey
+                })
+            );
+            const metaBody = await metaResponse.Body?.transformToString();
+            if (metaBody) {
+                const metadata = JSON.parse(metaBody);
+                source = metadata.source || null;
+            }
+        } catch {
+            // No metadata file — that's fine, source stays null
+        }
+
         return NextResponse.json({
             empty: false,
             name: fileName,
-            size: file.Size || 0
+            size: file.Size || 0,
+            source
         });
     } catch (err) {
         console.error(`[API] List files error for box ${box}:`, err);
@@ -56,7 +77,7 @@ export async function GET(
     }
 }
 
-// POST /api/boxes/:box/files - Get presigned PUT URL for upload
+// POST /api/boxes/:box/files - Get presigned PUT URLs for file + metadata
 export async function POST(
     request: NextRequest,
     { params }: { params: Promise<{ box: string }> }
@@ -64,19 +85,21 @@ export async function POST(
     const { box } = await params;
 
     try {
-        const { fileName, fileType } = await request.json();
+        const { fileName, fileType, metadata } = await request.json();
 
         if (!fileName || !fileType) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 
-        const key = `box${box}/${fileName}`;
-
         if (!R2_BUCKET) {
             return NextResponse.json({ error: "R2 bucket configuration missing" }, { status: 500 });
         }
 
-        const url = await getSignedUrl(
+        const key = `box${box}/${fileName}`;
+        const metaKey = `${key}.meta.json`;
+
+        // Presigned URL for the file
+        const fileUrl = await getSignedUrl(
             getR2(),
             new PutObjectCommand({
                 Bucket: R2_BUCKET,
@@ -86,7 +109,24 @@ export async function POST(
             { expiresIn: 120 }
         );
 
-        return NextResponse.json({ url, key }, { status: 200 });
+        // Presigned URL for the metadata sidecar
+        const metaUrl = await getSignedUrl(
+            getR2(),
+            new PutObjectCommand({
+                Bucket: R2_BUCKET,
+                Key: metaKey,
+                ContentType: 'application/json',
+            }),
+            { expiresIn: 120 }
+        );
+
+        return NextResponse.json({ 
+            url: fileUrl,       // Keep 'url' for backwards compatibility
+            fileUrl,
+            metaUrl,
+            key,
+            metaKey
+        }, { status: 200 });
 
     } catch (err) {
         console.error("presign error:", err);

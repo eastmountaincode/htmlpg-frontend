@@ -131,6 +131,7 @@ Ideas:
 | Frontend hosting | Vercel | Already using, serverless, free tier |
 | Real-time | Pusher | Already working, keep it |
 | Boxes | 4 shared across all units | Same garden, multiple portals |
+| File metadata | Sidecar `.meta.json` files | Simple, no DB needed, see `/METADATA.md` |
 
 ---
 

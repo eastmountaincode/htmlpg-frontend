@@ -38,7 +38,12 @@ export async function GET(
                 const { value, done } = await reader.read();
                 if (done) {
                     try {
+                        // Delete the file
                         await getR2().send(new DeleteObjectCommand({ Bucket: R2_BUCKET, Key: key }));
+                        // Delete the metadata sidecar (ignore if doesn't exist)
+                        try {
+                            await getR2().send(new DeleteObjectCommand({ Bucket: R2_BUCKET, Key: `${key}.meta.json` }));
+                        } catch { /* metadata file may not exist */ }
                         await getPusherServer().trigger('garden', 'file-deleted', {
                             boxNumber: box,
                             fileName: file
@@ -77,7 +82,7 @@ export async function GET(
     }
 }
 
-// DELETE /api/boxes/:box/files/:file - Delete a specific file
+// DELETE /api/boxes/:box/files/:file - Delete a specific file and its metadata
 export async function DELETE(
     request: NextRequest,
     { params }: { params: Promise<{ box: string; file: string }> }
@@ -86,10 +91,19 @@ export async function DELETE(
     const key = `box${box}/${file}`;
 
     try {
+        // Delete the file
         await getR2().send(new DeleteObjectCommand({
             Bucket: R2_BUCKET,
             Key: key
         }));
+
+        // Delete the metadata sidecar (ignore if doesn't exist)
+        try {
+            await getR2().send(new DeleteObjectCommand({
+                Bucket: R2_BUCKET,
+                Key: `${key}.meta.json`
+            }));
+        } catch { /* metadata file may not exist */ }
 
         await getPusherServer().trigger('garden', 'file-deleted', {
             boxNumber: box,

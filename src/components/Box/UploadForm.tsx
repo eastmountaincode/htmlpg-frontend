@@ -1,6 +1,12 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
+
+interface DeviceInfo {
+    deviceId: string;
+    name: string | null;
+    city: string | null;
+}
 
 interface UploadFormProps {
     boxNumber: number;
@@ -20,7 +26,16 @@ export default function UploadForm({ boxNumber, uploadDisabled, receiveDisabled,
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [uploading, setUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
+    const [deviceInfo, setDeviceInfo] = useState<DeviceInfo | null>(null);
     const inputRef = useRef<HTMLInputElement | null>(null);
+
+    // Fetch device info on mount
+    useEffect(() => {
+        fetch('/api/session/device')
+            .then(res => res.ok ? res.json() : null)
+            .then(data => setDeviceInfo(data))
+            .catch(() => setDeviceInfo(null));
+    }, []);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0] || null;
@@ -60,11 +75,12 @@ export default function UploadForm({ boxNumber, uploadDisabled, receiveDisabled,
                 return;
             }
             if (!presignResponse.ok) throw new Error('Failed to get presigned URL');
-            const { url, key } = await presignResponse.json();
+            const { url, metaUrl, key } = await presignResponse.json();
 
             setUploading(true);
             setUploadProgress(0);
 
+            // Upload the file
             await new Promise<void>((resolve, reject) => {
                 const xhr = new XMLHttpRequest();
 
@@ -91,6 +107,28 @@ export default function UploadForm({ boxNumber, uploadDisabled, receiveDisabled,
             }).finally(() => setUploading(false));
 
             console.log('File uploaded successfully', key);
+
+            // Upload metadata sidecar (if we have device info)
+            if (metaUrl && deviceInfo) {
+                const metadata = {
+                    source: {
+                        deviceId: deviceInfo.deviceId,
+                        name: deviceInfo.name,
+                        city: deviceInfo.city
+                    },
+                    uploadedAt: new Date().toISOString(),
+                    originalName: selectedFile.name,
+                    mimeType: selectedFile.type || 'application/octet-stream',
+                    size: selectedFile.size
+                };
+                
+                await fetch(metaUrl, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(metadata)
+                });
+                console.log('Metadata uploaded successfully');
+            }
 
             const eventResponse = await fetch(`/api/boxes/${boxNumber}/events`, {
                 method: 'POST',
