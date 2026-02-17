@@ -83,16 +83,6 @@ export default function AdminTestTools({ sessionInfo, timeSlotExpiry, intervalSe
             <QRCodeSVG value={fullUrl} size={200} />
           </div>
 
-          <div className="mt-3 pt-3 border-t border-gray-200">
-            <span className="text-gray-500 font-medium">Test invalid URL:</span>
-            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-            <a
-              href="/v/test/invalidtoken123"
-              className="block font-mono text-blue-600 hover:underline break-all mt-1"
-            >
-              {window.location.origin}/v/test/invalidtoken123
-            </a>
-          </div>
         </div>
       )}
     </div>
