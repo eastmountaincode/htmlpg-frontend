@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateQrToken } from "@/lib/qr-token";
-import { setSessionCookie, validateSessionValue, SESSION_COOKIE_NAME } from "@/lib/session";
+import { setSessionCookie } from "@/lib/session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,17 +24,8 @@ export async function GET(
     return NextResponse.redirect(new URL("/denied", request.url));
   }
 
-  // If there's already a valid session, don't reset the timer
-  const sessionSecret = process.env.SESSION_SECRET;
-  const existingCookie = request.cookies.get(SESSION_COOKIE_NAME)?.value;
-  if (existingCookie && sessionSecret) {
-    const existing = validateSessionValue(sessionSecret, existingCookie);
-    if (existing.valid) {
-      console.log(`[QR] Valid session already exists for device ${existing.deviceId}, skipping cookie reset`);
-      return NextResponse.redirect(new URL("/", request.url));
-    }
-  }
-
+  // Always set session to the scanned device (overwrite any existing session).
+  // The session timer is managed globally, not reset by scanning.
   console.log(`[QR] Valid token for device ${deviceId}, creating session`);
   await setSessionCookie(deviceId);
 

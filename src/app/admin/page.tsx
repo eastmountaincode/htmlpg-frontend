@@ -7,6 +7,7 @@ import { validateSessionValue, SESSION_COOKIE_NAME, getTimeSlotExpiry } from "@/
 import { QR_INTERVAL_SECONDS } from "@/lib/qr-token";
 import { cookies } from "next/headers";
 import AdminTestTools from "./AdminTestTools";
+import AdminFileManager from "./AdminFileManager";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -118,6 +119,12 @@ export default async function AdminPage() {
           <h2 className="text-lg font-semibold mb-3">Test Tools</h2>
 
           <AdminTestTools sessionInfo={sessionInfo} timeSlotExpiry={timeSlotExpiry} intervalSeconds={QR_INTERVAL_SECONDS} />
+        </div>
+
+        {/* File Management */}
+        <div className="mb-8 bg-white shadow-sm rounded-lg p-4">
+          <h2 className="text-lg font-semibold mb-3">File Management</h2>
+          <AdminFileManager />
         </div>
 
         {/* Device Status */}
