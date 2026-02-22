@@ -1,7 +1,6 @@
 import { createHmac } from "crypto";
 
-//export const QR_INTERVAL_SECONDS = 1800; // 30 minutes
-export const QR_INTERVAL_SECONDS = 60; // 60 seconds
+export const QR_INTERVAL_SECONDS = 1800; // 30 minutes
 
 export function generateQrToken(
   secret: string,
