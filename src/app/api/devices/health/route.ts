@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const HEALTH_PREFIX = "device-health/";
-const STALE_THRESHOLD_MS = 10 * 60 * 1000; // 10 minutes
+const STALE_THRESHOLD_MS = 2 * 60 * 1000; // 2 minutes (devices heartbeat every 60s)
 
 // POST /api/devices/health — receive heartbeat from a device
 export async function POST(request: NextRequest) {
