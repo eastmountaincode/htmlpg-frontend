@@ -48,7 +48,7 @@ export default function AdminFileManager() {
 
     setActionInProgress(boxNumber);
     try {
-      const url = `/api/boxes/${boxNumber}/files/${encodeURIComponent(box.name)}`;
+      const url = `/api/boxes/${boxNumber}/files/${encodeURIComponent(box.name)}?keep=true`;
       const response = await fetch(url);
       if (!response.ok) throw new Error(`Download failed: ${response.status}`);
 

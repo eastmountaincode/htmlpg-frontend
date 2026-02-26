@@ -15,13 +15,14 @@ function contentDisposition(filename: string) {
     return `attachment; filename="${asciiSafe}"; filename*=UTF-8''${utf8Encoded}`;
 }
 
-// GET /api/boxes/:box/files/:file - Stream file download and delete after transfer
+// GET /api/boxes/:box/files/:file - Stream file download (delete after transfer unless ?keep=true)
 export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ box: string; file: string }> }
 ) {
     const { box, file } = await params;
     const key = `box${box}/${file}`;
+    const keep = request.nextUrl.searchParams.get('keep') === 'true';
 
     try {
         const s3Response = await getR2().send(new GetObjectCommand({ Bucket: R2_BUCKET, Key: key }));
@@ -38,16 +39,18 @@ export async function GET(
                 const { value, done } = await reader.read();
                 if (done) {
                     try {
-                        // Delete the file
-                        await getR2().send(new DeleteObjectCommand({ Bucket: R2_BUCKET, Key: key }));
-                        // Delete the metadata sidecar (ignore if doesn't exist)
-                        try {
-                            await getR2().send(new DeleteObjectCommand({ Bucket: R2_BUCKET, Key: `${key}.meta.json` }));
-                        } catch { /* metadata file may not exist */ }
-                        await getPusherServer().trigger('garden', 'file-deleted', {
-                            boxNumber: box,
-                            fileName: file
-                        });
+                        if (!keep) {
+                            // Delete the file
+                            await getR2().send(new DeleteObjectCommand({ Bucket: R2_BUCKET, Key: key }));
+                            // Delete the metadata sidecar (ignore if doesn't exist)
+                            try {
+                                await getR2().send(new DeleteObjectCommand({ Bucket: R2_BUCKET, Key: `${key}.meta.json` }));
+                            } catch { /* metadata file may not exist */ }
+                            await getPusherServer().trigger('garden', 'file-deleted', {
+                                boxNumber: box,
+                                fileName: file
+                            });
+                        }
                     } catch (err) {
                         console.error('[API] post-stream cleanup failed', err);
                     } finally {
