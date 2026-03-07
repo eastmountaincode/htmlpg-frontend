@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { deviceId, connected, timestamp } = await request.json();
+    const { deviceId, connected, timestamp, firmwareVersion, deviceType } = await request.json();
 
     if (!deviceId || typeof connected !== "boolean" || !timestamp) {
       return NextResponse.json(
@@ -33,7 +33,13 @@ export async function POST(request: NextRequest) {
     }
 
     const key = `${HEALTH_PREFIX}${deviceId}.json`;
-    const body = JSON.stringify({ deviceId, connected, timestamp });
+    const body = JSON.stringify({ 
+      deviceId, 
+      connected, 
+      timestamp,
+      ...(firmwareVersion && { firmwareVersion }),
+      ...(deviceType && { deviceType }),
+    });
 
     await getR2().send(
       new PutObjectCommand({

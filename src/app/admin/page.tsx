@@ -20,6 +20,8 @@ interface DeviceHealth {
   connected: boolean;
   timestamp: string;
   stale: boolean;
+  firmwareVersion?: string;
+  deviceType?: string;
 }
 
 function relativeTime(timestamp: string): string {
@@ -60,6 +62,8 @@ async function getDeviceHealth(): Promise<DeviceHealth[]> {
           connected: data.connected,
           timestamp: data.timestamp,
           stale: now - lastSeen > STALE_THRESHOLD_MS,
+          firmwareVersion: data.firmwareVersion,
+          deviceType: data.deviceType,
         };
       })
     );
@@ -137,6 +141,8 @@ export default async function AdminPage() {
               <tr className="bg-gray-100 text-left text-sm text-gray-600">
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Device</th>
+                <th className="px-4 py-3">Type</th>
+                <th className="px-4 py-3">Firmware</th>
                 <th className="px-4 py-3">Connection</th>
                 <th className="px-4 py-3">Last Seen</th>
               </tr>
@@ -152,6 +158,22 @@ export default async function AdminPage() {
                   </td>
                   <td className="px-4 py-3 font-mono text-sm">
                     {device.deviceId}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-500">
+                    {device.deviceType === "esp32" ? (
+                      <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">ESP32</span>
+                    ) : device.deviceType === "rpi" ? (
+                      <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">RPi</span>
+                    ) : (
+                      <span className="text-gray-400">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 font-mono text-sm">
+                    {device.deviceType === "esp32" && device.firmwareVersion ? (
+                      <span className="text-gray-700">v{device.firmwareVersion}</span>
+                    ) : (
+                      <span className="text-gray-400">—</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-sm">
                     {device.stale
