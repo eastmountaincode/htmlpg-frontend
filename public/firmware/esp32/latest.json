@@ -1,0 +1,6 @@
+{
+  "version": "1.0.1",
+  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/v1.0.1.bin",
+  "required": false,
+  "releaseNotes": "OTA update test - version bump"
+}
