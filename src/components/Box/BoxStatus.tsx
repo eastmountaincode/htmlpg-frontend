@@ -53,7 +53,7 @@ export default function BoxStatus({ boxNumber, loading, empty, fileName, fileSiz
     }
 
     const rows: [string, string][] = [
-        ['File:', truncateName(fileName || '?', 20)],
+        ['File:', truncateName(fileName || '?', 40)],
         ['Type:', getFileType(fileName || '')],
         ['Size:', formatSize(fileSize!)],
     ];
