@@ -1,6 +1,6 @@
 {
-  "version": "1.0.18",
-  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/v1.0.18.bin",
+  "version": "1.0.19",
+  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/v1.0.19.bin",
   "required": false,
-  "releaseNotes": "Update v1.0.18: fix boot complete message not showing for 2 seconds"
+  "releaseNotes": "Update v1.0.19: reconvert psychic illustration (cropped), longer boot complete delay (3s)"
 }
