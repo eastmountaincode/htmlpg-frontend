@@ -1,6 +1,6 @@
 {
-  "version": "1.0.15",
-  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/v1.0.15.bin",
+  "version": "1.0.18",
+  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/v1.0.18.bin",
   "required": false,
-  "releaseNotes": "Update v1.0.15: custom illustrations per boot step, restore title to Garden"
+  "releaseNotes": "Update v1.0.18: fix boot complete message not showing for 2 seconds"
 }
