@@ -1,6 +1,6 @@
 {
-  "version": "1.0.10",
-  "url": "https://htmlpg.vercel.app/firmware/esp32/v1.0.10.bin",
+  "version": "1.0.12",
+  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/v1.0.12.bin",
   "required": false,
-  "releaseNotes": "OTA test: title changed to Gardee"
+  "releaseNotes": "Update v1.0.12: fix captive portal crash (replace async web server with sync), restore title"
 }
