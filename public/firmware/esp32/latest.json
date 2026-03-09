@@ -1,6 +1,6 @@
 {
-  "version": "1.0.8",
-  "url": "https://htmlpg.vercel.app/firmware/esp32/v1.0.8.bin",
+  "version": "1.0.9",
+  "url": "https://htmlpg.vercel.app/firmware/esp32/v1.0.9.bin",
   "required": false,
-  "releaseNotes": "Fix QR code margins: even white quiet zone on all sides, byte-aligned partial refresh"
+  "releaseNotes": "QR rotation back to 30 minutes, OTA enabled"
 }
