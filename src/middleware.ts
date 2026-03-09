@@ -16,6 +16,7 @@ export function middleware(request: NextRequest) {
   if (pathname.startsWith("/v/")) return NextResponse.next();
   if (pathname === "/denied") return NextResponse.next();
   if (pathname.startsWith("/api/")) return NextResponse.next(); // API routes used by devices
+  if (pathname.startsWith("/firmware/")) return NextResponse.next(); // OTA firmware updates
 
   // Admin routes — password-protected via admin cookie
   if (pathname === "/admin" || pathname.startsWith("/admin/")) {
@@ -56,6 +57,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|firmware/).*)",
   ],
 };

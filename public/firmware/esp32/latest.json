@@ -1,6 +1,6 @@
 {
-  "version": "1.0.1",
-  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/v1.0.1.bin",
+  "version": "1.0.7",
+  "url": "https://htmlpg.vercel.app/firmware/esp32/v1.0.7.bin",
   "required": false,
-  "releaseNotes": "OTA update test - version bump"
+  "releaseNotes": "60s rotation testing, 66px QR, margin fix"
 }

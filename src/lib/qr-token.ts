@@ -1,6 +1,6 @@
 import { createHmac } from "crypto";
 
-export const QR_INTERVAL_SECONDS = 1800; // 30 minutes
+export const QR_INTERVAL_SECONDS = 60; // TEMP: 60 seconds for rotation testing
 
 export function generateQrToken(
   secret: string,
@@ -18,7 +18,10 @@ export function validateQrToken(
   token: string
 ): boolean {
   const now = Math.floor(Date.now() / 1000);
-  const currentToken = generateQrToken(secret, deviceId, now);
-  const previousToken = generateQrToken(secret, deviceId, now - QR_INTERVAL_SECONDS);
-  return token === currentToken || token === previousToken;
+  // Accept tokens from current slot and previous 10 slots (~5 min window for clock drift)
+  for (let i = 0; i <= 10; i++) {
+    const checkToken = generateQrToken(secret, deviceId, now - i * QR_INTERVAL_SECONDS);
+    if (token === checkToken) return true;
+  }
+  return false;
 }
