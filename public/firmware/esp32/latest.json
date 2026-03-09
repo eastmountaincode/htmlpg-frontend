@@ -1,6 +1,6 @@
 {
-  "version": "1.0.12",
-  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/v1.0.12.bin",
+  "version": "1.0.13",
+  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/v1.0.13.bin",
   "required": false,
-  "releaseNotes": "Update v1.0.12: fix captive portal crash (replace async web server with sync), restore title"
+  "releaseNotes": "Update v1.0.13: OTA test — title to Gardee"
 }
