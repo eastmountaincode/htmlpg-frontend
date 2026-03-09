@@ -1,6 +1,6 @@
 {
-  "version": "1.0.9",
-  "url": "https://htmlpg.vercel.app/firmware/esp32/v1.0.9.bin",
+  "version": "1.0.10",
+  "url": "https://htmlpg.vercel.app/firmware/esp32/v1.0.10.bin",
   "required": false,
-  "releaseNotes": "QR rotation back to 30 minutes, OTA enabled"
+  "releaseNotes": "OTA test: title changed to Gardee"
 }
