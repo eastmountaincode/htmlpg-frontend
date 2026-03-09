@@ -1,6 +1,6 @@
 {
-  "version": "1.0.14",
-  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/v1.0.14.bin",
+  "version": "1.0.15",
+  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/v1.0.15.bin",
   "required": false,
-  "releaseNotes": "Update v1.0.14: restore title, show firmware version at boot, 1s min per boot message"
+  "releaseNotes": "Update v1.0.15: custom illustrations per boot step, restore title to Garden"
 }
