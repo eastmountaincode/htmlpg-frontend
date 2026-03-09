@@ -1,6 +1,6 @@
 {
-  "version": "1.0.13",
-  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/v1.0.13.bin",
+  "version": "1.0.14",
+  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/v1.0.14.bin",
   "required": false,
-  "releaseNotes": "Update v1.0.13: OTA test — title to Gardee"
+  "releaseNotes": "Update v1.0.14: restore title, show firmware version at boot, 1s min per boot message"
 }
