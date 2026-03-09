@@ -13,7 +13,7 @@ interface BoxProps {
 const backgroundColor = 'bg-green-400';
 
 export default function Box({ boxNumber, onRegisterCallback }: BoxProps) {
-    const [boxStatus, setBoxStatus] = useState<{ empty: boolean; name?: string; size?: number }>({ empty: true });
+    const [boxStatus, setBoxStatus] = useState<{ empty: boolean; name?: string; size?: number; source?: { name?: string; city?: string } | null }>({ empty: true });
     const [loading, setLoading] = useState(true);
 
     const fetchBoxStatus = async () => {
@@ -101,6 +101,7 @@ export default function Box({ boxNumber, onRegisterCallback }: BoxProps) {
                     empty={boxStatus.empty}
                     fileName={boxStatus.name}
                     fileSize={boxStatus.size}
+                    source={boxStatus.source}
                 />
                 <UploadForm
                     boxNumber={boxNumber}

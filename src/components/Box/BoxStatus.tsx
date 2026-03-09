@@ -4,6 +4,7 @@ interface BoxStatusProps {
     empty: boolean;
     fileName?: string;
     fileSize?: number;
+    source?: { name?: string; city?: string } | null;
 }
 
 function formatSize(bytes: number) {
@@ -35,7 +36,7 @@ function truncateName(name: string, max: number) {
     return name.slice(0, max - 3) + '...';
 }
 
-export default function BoxStatus({ boxNumber, loading, empty, fileName, fileSize }: BoxStatusProps) {
+export default function BoxStatus({ boxNumber, loading, empty, fileName, fileSize, source }: BoxStatusProps) {
     if (loading) {
         return (
             <div className="m-2.5 mt-0.5 border px-2 py-1.5">
@@ -52,6 +53,10 @@ export default function BoxStatus({ boxNumber, loading, empty, fileName, fileSiz
         );
     }
 
+    const sourceLine = source?.name
+        ? `from ${source.name}${source.city ? `, ${source.city}` : ''}`
+        : null;
+
     const rows: [string, string][] = [
         ['File:', truncateName(fileName || '?', 40)],
         ['Type:', getFileType(fileName || '')],
@@ -60,6 +65,9 @@ export default function BoxStatus({ boxNumber, loading, empty, fileName, fileSiz
 
     return (
         <div className="m-2.5 mt-0.5 border px-2 py-1.5 space-y-0.5">
+            {sourceLine && (
+                <p className="text-xs text-gray-600 italic leading-tight">{sourceLine}</p>
+            )}
             {rows.map(([label, value]) => (
                 <p key={label} className="text-sm leading-tight">
                     <span className="font-bold">{label}</span>{' '}
