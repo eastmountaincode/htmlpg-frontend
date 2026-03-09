@@ -1,6 +1,6 @@
 {
-  "version": "1.0.19",
-  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/v1.0.19.bin",
+  "version": "1.0.20",
+  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/v1.0.20.bin",
   "required": false,
-  "releaseNotes": "Update v1.0.19: reconvert psychic illustration (cropped), longer boot complete delay (3s)"
+  "releaseNotes": "Update v1.0.20: fix 'Checking updates' to 'Checking for updates'"
 }
