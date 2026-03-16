@@ -8,6 +8,17 @@ export const dynamic = 'force-dynamic';
 
 // GET /api/session/device - Get current session's device info
 export async function GET() {
+    // In development, return a mock device so the UI works without a real session
+    if (process.env.NODE_ENV === 'development') {
+        const firstDeviceId = Object.keys(devices)[0];
+        const firstDevice = devices[firstDeviceId as keyof typeof devices];
+        return NextResponse.json({
+            deviceId: firstDeviceId,
+            name: firstDevice?.name || null,
+            city: firstDevice?.city || null,
+        });
+    }
+
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME)?.value;
     const sessionSecret = process.env.SESSION_SECRET;

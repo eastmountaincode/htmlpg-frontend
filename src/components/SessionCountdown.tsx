@@ -48,7 +48,7 @@ export default function SessionCountdown({ expiresAt, intervalSeconds, onSlotCha
     const display = `${minutes}:${seconds.toString().padStart(2, '0')}`;
     return (
         <p className="text-sm text-gray-500" suppressHydrationWarning>
-            session {display}
+            session will expire in {display}
         </p>
     );
 }

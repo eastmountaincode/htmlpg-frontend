@@ -201,7 +201,7 @@ export default function UploadForm({ boxNumber, uploadDisabled, receiveDisabled,
                     type="submit"
                     value="Offer"
                     disabled={!selectedFile}
-                    className={`px-2 py-1 border ${selectedFile ? 'cursor-pointer' : ''} ${!selectedFile ? disabledOpacity : ''} ${uploadColor}`}
+                    className={`px-2 py-1 border ${selectedFile ? 'cursor-pointer border-red-500 border-2' : ''} ${!selectedFile ? disabledOpacity : ''} ${uploadColor}`}
                 />
             </div>
         </form>

@@ -91,10 +91,35 @@ export default function Garden({ sessionExpiresAt, shareUrl }: GardenProps) {
             <div className="text-center mx-5 my-5">
                 <h2 className="text-xl">
                     ✿ ❀ ❁ ❃ ❋ <br />
-                    HTMLPG <br />
+                    HTML Pollinator Garden <br />
                     ❋ ❃ ❁ ❀ ✿
                 </h2>
                 {sessionExpiresAt && <SessionInfo expiresAt={sessionExpiresAt} shareUrl={shareUrl} />}
+                <details className="max-w-sm mx-auto mt-3 text-left">
+                    <summary className="cursor-pointer text-gray-400 text-sm select-none">What is this?</summary>
+                    <div className="mt-2 text-sm text-gray-600 space-y-3">
+                        <p className="font-bold">What is this?</p>
+
+                        <p>
+                            HTML Pollinator Garden is like a{' '}
+                            <a href="https://littlefreelibrary.org/" target="_blank" rel="noopener noreferrer" className="underline">
+                                Little Free Library
+                            </a>{' '}
+                            but for files (any type) instead of books.
+                        </p>
+                        <p className="font-bold">How does it work?</p>
+                        <p>Scan the QR code to get a URL and access the website.</p>
+                        <ul className="list-disc pl-5 space-y-1">
+                            <li>To download a file, click &ldquo;<span className="bg-red-400">Receive</span>&rdquo;. When you download a file, it gets removed from the box for everyone, just like in real life.</li>
+                            <li>To upload a file, click &ldquo;<span className="bg-yellow-400">Choose File</span>&rdquo; to select a file, then press &ldquo;<span className="bg-yellow-400">Offer</span>&rdquo; to upload it.</li>
+                        </ul>
+                        <p>The QR code / URL changes every 30 minutes. This ensures files come from people who were physically present at the location of the HTMLPG device.</p>
+                        <p>To upload files from your computer, scan the QR code with your phone, copy the URL, text/email it to yourself, then open it in your browser.</p>
+
+                        <p className="font-bold">Why?</p>
+                        <p>To create serendipity in our lives and in the lives of others.</p>
+                    </div>
+                </details>
             </div>
             <div className="pt-[10px] pb-[40px] space-y-[30px]">
                 <Box boxNumber={1} onRegisterCallback={registerBoxCallback} />
