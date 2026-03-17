@@ -87,7 +87,22 @@ export default function Garden({ sessionExpiresAt, shareUrl }: GardenProps) {
     }, []);
 
     return (
-        <div className="min-h-screen font-serif font-normal">
+        <div className="relative min-h-screen font-serif font-normal">
+            {/* Decorative illustration columns — desktop only */}
+            <div className="hidden lg:block fixed left-0 top-0 w-[calc((100%-384px)/2)] h-full pointer-events-none">
+                <div className="flex flex-col items-center gap-17 pt-8 opacity-[0.08]">
+                    <img src="/illustrations/butterfly.png" alt="" className="w-[260px]" />
+                    <img src="/illustrations/psychic.png" alt="" className="w-[280px]" />
+                    <img src="/illustrations/star_figure.png" alt="" className="w-[340px]" />
+                </div>
+            </div>
+            <div className="hidden lg:block fixed right-0 -top-0 w-[calc((100%-384px)/2)] h-full pointer-events-none">
+                <div className="flex flex-col items-center gap-32 pt-48 opacity-[0.08]">
+                    <img src="/illustrations/bees.png" alt="" className="w-[280px]" />
+                    <img src="/illustrations/yoyo.png" alt="" className="w-[260px]" />
+                </div>
+            </div>
+
             <div className="text-center mx-5 my-5">
                 <h2 className="text-xl">
                     ✿ ❀ ❁ ❃ ❋ <br />
