@@ -104,6 +104,7 @@ export default function Garden({ sessionExpiresAt, shareUrl }: GardenProps) {
             </div>
 
             <div className="text-center mx-5 my-5">
+                <img src="/illustrations/star_logo.png" alt="" className="w-8 mx-auto mb-1" />
                 <h2 className="text-xl">
                     ✿ ❀ ❁ ❃ ❋ <br />
                     HTML Pollinator Garden <br />
