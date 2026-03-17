@@ -121,7 +121,7 @@ export default function Garden({ sessionExpiresAt, shareUrl }: GardenProps) {
                             <a href="https://littlefreelibrary.org/" target="_blank" rel="noopener noreferrer" className="underline">
                                 Little Free Library
                             </a>{' '}
-                            but for files (any type) instead of books.
+                            but for files instead of books. Any type of file can be shared.
                         </p>
                         <p className="font-bold">How does it work?</p>
                         <p>Scan the QR code to get a URL and access the website.</p>
