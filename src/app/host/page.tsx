@@ -33,7 +33,7 @@ export default function HostPage() {
                     </p>
                 </div>
 
-                <img src="/images/devices_picture.png" alt="An HTMLPG device" className="w-full" />
+                <img src="/images/devices_picture.jpg" alt="An HTMLPG device" className="w-full" />
                 <p className="text-center text-xs text-gray-500">Here&apos;s what they look like!</p>
 
                 <div className="space-y-3">
