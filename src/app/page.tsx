@@ -1,6 +1,6 @@
 import { cookies, headers } from 'next/headers';
 import { validateSessionValue, SESSION_COOKIE_NAME, getTimeSlotExpiry } from '@/lib/session';
-import { generateQrToken, QR_INTERVAL_SECONDS } from '@/lib/qr-token';
+import { generateQrToken } from '@/lib/qr-token';
 import Garden from '@/components/Garden';
 import devices from '@/lib/devices.json';
 
