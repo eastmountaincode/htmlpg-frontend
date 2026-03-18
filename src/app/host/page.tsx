@@ -1,4 +1,4 @@
-import { HiOutlineMail, HiOutlinePhone } from 'react-icons/hi';
+import { HiOutlineMail, HiOutlinePhone, HiOutlineGlobe } from 'react-icons/hi';
 
 export default function HostPage() {
     return (
@@ -86,6 +86,7 @@ export default function HostPage() {
                     <h3 className="font-bold text-base">Contact</h3>
                     <p className="flex items-center gap-2"><HiOutlineMail className="shrink-0" /> {'andrewe'}{'boylan'}{'@'}{'gmail'}{'.'}{'com'}</p>
                     <p className="flex items-center gap-2"><HiOutlinePhone className="shrink-0" /> {'513'}&#45;{'235'}&#45;{'7254'}</p>
+                    <p className="flex items-center gap-2"><HiOutlineGlobe className="shrink-0" /> <a href="https://andrew-boylan.com" target="_blank" rel="noopener noreferrer" className="underline">andrew-boylan.com</a></p>
                 </div>
             </div>
         </div>
