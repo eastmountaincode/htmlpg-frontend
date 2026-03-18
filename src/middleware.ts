@@ -15,6 +15,7 @@ export function middleware(request: NextRequest) {
   // Routes that bypass session check
   if (pathname.startsWith("/v/")) return NextResponse.next();
   if (pathname === "/denied") return NextResponse.next();
+  if (pathname === "/host") return NextResponse.next();
   if (pathname.startsWith("/api/")) return NextResponse.next(); // API routes used by devices
   if (pathname.startsWith("/firmware/")) return NextResponse.next(); // OTA firmware updates
 
