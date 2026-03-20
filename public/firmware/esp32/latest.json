@@ -1,6 +1,6 @@
 {
-  "version": "1.0.20",
-  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/v1.0.20.bin",
+  "version": "1.0.21",
+  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/v1.0.21.bin",
   "required": false,
-  "releaseNotes": "Update v1.0.20: fix 'Checking updates' to 'Checking for updates'"
+  "releaseNotes": "v1.0.21: Fix boot proceeding without WiFi — now blocks until connected. Add Scan Again button and auto-refresh to captive portal."
 }
