@@ -10,5 +10,9 @@
   "htmlpg-003": {
     "name": "Recurse Center",
     "city": "NYC"
+  },
+  "htmlpg-005": {
+    "name": "Wonderville",
+    "city": "Brooklyn"
   }
 }

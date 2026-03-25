@@ -26,14 +26,21 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Fetch the static JSON file from our own server
-    const baseUrl = process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}` 
+    // Check for per-device firmware first, then fall back to shared
+    const baseUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
       : "https://htmlpg.andrew-boylan.com";
-    
-    const metaUrl = `${baseUrl}/firmware/esp32/latest.json`;
-    const response = await fetch(metaUrl, { cache: "no-store" });
-    
+
+    // Try device-specific firmware first (e.g. /firmware/esp32/htmlpg-005/latest.json)
+    let metaUrl = `${baseUrl}/firmware/esp32/${deviceId}/latest.json`;
+    let response = await fetch(metaUrl, { cache: "no-store" });
+
+    // Fall back to shared firmware
+    if (!response.ok) {
+      metaUrl = `${baseUrl}/firmware/esp32/latest.json`;
+      response = await fetch(metaUrl, { cache: "no-store" });
+    }
+
     if (!response.ok) {
       return NextResponse.json({
         version: currentVersion,
