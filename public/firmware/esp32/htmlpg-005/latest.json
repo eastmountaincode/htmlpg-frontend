@@ -1,6 +1,6 @@
 {
-  "version": "1.0.21",
-  "url": "",
+  "version": "1.0.1",
+  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/htmlpg-005/v1.0.1.bin",
   "required": false,
-  "releaseNotes": "v1.0.21: Initial 005 tri-color firmware. No OTA binary published yet."
+  "releaseNotes": "v1.0.1: Tri-color display with per-device OTA."
 }
