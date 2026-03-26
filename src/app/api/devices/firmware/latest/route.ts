@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { promises as fs } from "fs";
-import path from "path";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+const BASE_URL = "https://htmlpg.andrew-boylan.com";
+
 // GET /api/devices/firmware/latest — check for firmware updates
-// Reads from public/firmware/esp32/latest.json (static file)
+// Checks per-device firmware first, then falls back to shared
 export async function GET(request: NextRequest) {
   const deviceId = request.headers.get("x-device-id") || "";
   const currentVersion = request.headers.get("x-firmware-version") || "0.0.0";
-  
+
   // Determine device type from device ID prefix
   const deviceType = deviceId.startsWith("htmlpg-") ? "esp32" : "rpi";
 
@@ -26,19 +26,18 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Check for per-device firmware first, then fall back to shared
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : "https://htmlpg.andrew-boylan.com";
-
-    // Try device-specific firmware first (e.g. /firmware/esp32/htmlpg-005/latest.json)
-    let metaUrl = `${baseUrl}/firmware/esp32/${deviceId}/latest.json`;
-    let response = await fetch(metaUrl, { cache: "no-store" });
+    // Try per-device firmware first (e.g. /firmware/esp32/htmlpg-005/latest.json)
+    let response = await fetch(
+      `${BASE_URL}/firmware/esp32/${deviceId}/latest.json`,
+      { cache: "no-store" }
+    );
 
     // Fall back to shared firmware
     if (!response.ok) {
-      metaUrl = `${baseUrl}/firmware/esp32/latest.json`;
-      response = await fetch(metaUrl, { cache: "no-store" });
+      response = await fetch(
+        `${BASE_URL}/firmware/esp32/latest.json`,
+        { cache: "no-store" }
+      );
     }
 
     if (!response.ok) {

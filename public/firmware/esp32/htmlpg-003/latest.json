@@ -1,6 +1,6 @@
 {
-  "version": "1.0.22",
-  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/htmlpg-003/v1.0.22.bin",
+  "version": "1.0.23",
+  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/htmlpg-003/v1.0.23.bin",
   "required": false,
-  "releaseNotes": "v1.0.22: Switch to per-device OTA firmware endpoint."
+  "releaseNotes": "v1.0.23: Per-device OTA firmware test."
 }
