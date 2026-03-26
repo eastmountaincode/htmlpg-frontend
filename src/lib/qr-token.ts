@@ -18,8 +18,8 @@ export function validateQrToken(
   token: string
 ): boolean {
   const now = Math.floor(Date.now() / 1000);
-  // Accept tokens from current slot and previous slot (~30 min grace for clock drift)
-  for (let i = 0; i <= 1; i++) {
+  // Accept tokens from current slot only (max 30 min window)
+  for (let i = 0; i <= 0; i++) {
     const checkToken = generateQrToken(secret, deviceId, now - i * QR_INTERVAL_SECONDS);
     if (token === checkToken) return true;
   }
