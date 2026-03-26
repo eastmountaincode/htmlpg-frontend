@@ -1,6 +1,6 @@
 {
-  "version": "1.0.21",
-  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/htmlpg-003/v1.0.21.bin",
+  "version": "1.0.22",
+  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/htmlpg-003/v1.0.22.bin",
   "required": false,
-  "releaseNotes": "v1.0.21: Fix boot proceeding without WiFi — now blocks until connected. Add Scan Again button and auto-refresh to captive portal."
+  "releaseNotes": "v1.0.22: Switch to per-device OTA firmware endpoint."
 }
