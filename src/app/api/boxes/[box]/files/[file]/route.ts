@@ -1,7 +1,10 @@
 import { GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { getPusherServer } from "@/lib/pusher";
 import { getR2, R2_BUCKET } from "@/lib/r2";
+import { validateSessionValue, SESSION_COOKIE_NAME } from "@/lib/session";
+import { incrementDownloads } from "@/lib/d1";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,6 +32,21 @@ export async function GET(
 
         if (!s3Response.Body || typeof s3Response.Body.transformToWebStream !== 'function') {
             return new Response(JSON.stringify({ error: "File not found" }), { status: 404 });
+        }
+
+        // Track download count per device
+        try {
+            const cookieStore = await cookies();
+            const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+            const secret = process.env.SESSION_SECRET;
+            if (sessionCookie && secret) {
+                const result = validateSessionValue(secret, sessionCookie);
+                if (result.valid) {
+                    await incrementDownloads(result.deviceId);
+                }
+            }
+        } catch (err) {
+            console.error("[Download] Failed to increment download count:", err);
         }
 
         const src = s3Response.Body.transformToWebStream();

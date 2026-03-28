@@ -86,6 +86,8 @@ export interface DeviceRow {
   name: string;
   city: string;
   notes: string;
+  uploads: number;
+  downloads: number;
   deviceType: string | null;
   firmwareVersion: string | null;
   connected: boolean | null;
@@ -109,6 +111,8 @@ export default async function AdminPage() {
       name: d.name,
       city: d.city,
       notes: d.notes || '',
+      uploads: d.uploads || 0,
+      downloads: d.downloads || 0,
       deviceType: health?.deviceType || null,
       firmwareVersion: health?.firmwareVersion || null,
       connected: health ? health.connected : null,

@@ -53,6 +53,8 @@ export interface Device {
   name: string;
   city: string;
   notes: string;
+  uploads: number;
+  downloads: number;
   created_at: string;
   updated_at: string;
 }
@@ -103,4 +105,18 @@ export async function updateDevice(id: string, fields: { name?: string; city?: s
 
 export async function deleteDevice(id: string): Promise<void> {
   await d1Query("DELETE FROM devices WHERE id = ?", [id]);
+}
+
+export async function incrementUploads(deviceId: string): Promise<void> {
+  await d1Query(
+    "UPDATE devices SET uploads = uploads + 1, updated_at = datetime('now') WHERE id = ?",
+    [deviceId]
+  );
+}
+
+export async function incrementDownloads(deviceId: string): Promise<void> {
+  await d1Query(
+    "UPDATE devices SET downloads = downloads + 1, updated_at = datetime('now') WHERE id = ?",
+    [deviceId]
+  );
 }

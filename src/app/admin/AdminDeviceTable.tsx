@@ -90,6 +90,8 @@ export default function AdminDeviceTable({ initialDevices }: { initialDevices: D
             <th className="px-3 py-2">City</th>
             <th className="px-3 py-2">Type</th>
             <th className="px-3 py-2">Firmware</th>
+            <th className="px-3 py-2">Uploads</th>
+            <th className="px-3 py-2">Downloads</th>
             <th className="px-3 py-2">Last Seen</th>
             <th className="px-3 py-2">Notes</th>
             <th className="px-3 py-2"></th>
@@ -124,6 +126,8 @@ export default function AdminDeviceTable({ initialDevices }: { initialDevices: D
               <td className="px-3 py-2 font-mono text-gray-600">
                 {d.firmwareVersion ? `v${d.firmwareVersion}` : '—'}
               </td>
+              <td className="px-3 py-2 text-center tabular-nums">{d.uploads}</td>
+              <td className="px-3 py-2 text-center tabular-nums">{d.downloads}</td>
               <td className="px-3 py-2 text-gray-500">
                 {d.lastSeen ? relativeTime(d.lastSeen) : '—'}
               </td>
