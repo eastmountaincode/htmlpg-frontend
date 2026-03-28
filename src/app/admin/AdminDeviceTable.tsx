@@ -139,7 +139,7 @@ export default function AdminDeviceTable({ initialDevices }: { initialDevices: D
                   />
                 ) : d.city}
               </td>
-              <td className="px-3 py-2"><TypeBadge type={d.deviceType} /></td>
+              <td className="px-3 py-2 whitespace-nowrap"><TypeBadge type={d.deviceType} /></td>
               <td className="px-3 py-2 font-mono text-gray-600">
                 {d.firmwareVersion ? `v${d.firmwareVersion}` : '—'}
               </td>
