@@ -2,7 +2,7 @@ import { cookies, headers } from 'next/headers';
 import { validateSessionValue, SESSION_COOKIE_NAME, getTimeSlotExpiry } from '@/lib/session';
 import { generateQrToken } from '@/lib/qr-token';
 import Garden from '@/components/Garden';
-import devices from '@/lib/devices.json';
+import { getDevices } from '@/lib/d1';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +12,8 @@ export default async function Home() {
 
     if (process.env.NODE_ENV === 'development') {
         sessionExpiresAt = getTimeSlotExpiry();
-        const deviceId = Object.keys(devices)[0];
+        const devices = await getDevices();
+        const deviceId = devices[0]?.id;
         const qrSecret = process.env.QR_SECRET;
         if (qrSecret && deviceId) {
             const token = generateQrToken(qrSecret, deviceId);

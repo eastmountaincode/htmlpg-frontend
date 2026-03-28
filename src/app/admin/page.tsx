@@ -6,14 +6,16 @@ import { getR2, R2_BUCKET } from "@/lib/r2";
 import { validateSessionValue, SESSION_COOKIE_NAME, getTimeSlotExpiry } from "@/lib/session";
 import { QR_INTERVAL_SECONDS } from "@/lib/qr-token";
 import { cookies } from "next/headers";
+import { getDevices } from "@/lib/d1";
 import AdminTestTools from "./AdminTestTools";
 import AdminFileManager from "./AdminFileManager";
+import AdminDeviceTable from "./AdminDeviceTable";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const HEALTH_PREFIX = "device-health/";
-const STALE_THRESHOLD_MS = 2 * 60 * 1000; // 2 minutes (devices heartbeat every 60s)
+const STALE_THRESHOLD_MS = 2 * 60 * 1000;
 
 interface DeviceHealth {
   deviceId: string;
@@ -24,30 +26,20 @@ interface DeviceHealth {
   deviceType?: string;
 }
 
-function relativeTime(timestamp: string): string {
-  const diff = Date.now() - new Date(timestamp).getTime();
-  const seconds = Math.floor(diff / 1000);
-  if (seconds < 60) return `${seconds}s ago`;
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
-}
-
-async function getDeviceHealth(): Promise<DeviceHealth[]> {
-  if (!R2_BUCKET) return [];
+async function getDeviceHealth(): Promise<Record<string, DeviceHealth>> {
+  if (!R2_BUCKET) return {};
 
   try {
     const listResult = await getR2().send(
       new ListObjectsV2Command({ Bucket: R2_BUCKET, Prefix: HEALTH_PREFIX })
     );
 
-    if (!listResult.Contents || listResult.Contents.length === 0) return [];
+    if (!listResult.Contents || listResult.Contents.length === 0) return {};
 
     const now = Date.now();
-    const devices = await Promise.all(
+    const healthMap: Record<string, DeviceHealth> = {};
+
+    await Promise.all(
       listResult.Contents.filter(
         (obj) => obj.Key && !obj.Key.endsWith("/") && (obj.Size || 0) > 0
       ).map(async (obj) => {
@@ -57,7 +49,7 @@ async function getDeviceHealth(): Promise<DeviceHealth[]> {
         const body = await result.Body?.transformToString();
         const data = JSON.parse(body || "{}");
         const lastSeen = new Date(data.timestamp).getTime();
-        return {
+        healthMap[data.deviceId] = {
           deviceId: data.deviceId,
           connected: data.connected,
           timestamp: data.timestamp,
@@ -68,30 +60,11 @@ async function getDeviceHealth(): Promise<DeviceHealth[]> {
       })
     );
 
-    return devices;
+    return healthMap;
   } catch (err) {
     console.error("[Admin] Failed to fetch device health:", err);
-    return [];
+    return {};
   }
-}
-
-function StatusDot({ connected, stale }: { connected: boolean; stale: boolean }) {
-  if (stale) {
-    return (
-      <span
-        className="inline-block w-3 h-3 rounded-full bg-yellow-400"
-        title="Stale"
-      />
-    );
-  }
-  return (
-    <span
-      className={`inline-block w-3 h-3 rounded-full ${
-        connected ? "bg-green-500" : "bg-red-500"
-      }`}
-      title={connected ? "Connected" : "Disconnected"}
-    />
-  );
 }
 
 async function getSessionInfo(): Promise<{ deviceId: string; exp: number } | null> {
@@ -108,20 +81,50 @@ async function getSessionInfo(): Promise<{ deviceId: string; exp: number } | nul
   return { deviceId: result.deviceId, exp: result.exp };
 }
 
+export interface DeviceRow {
+  id: string;
+  name: string;
+  city: string;
+  notes: string;
+  deviceType: string | null;
+  firmwareVersion: string | null;
+  connected: boolean | null;
+  stale: boolean;
+  lastSeen: string | null;
+}
+
 export default async function AdminPage() {
-  const devices = await getDeviceHealth();
-  const sessionInfo = await getSessionInfo();
+  const [devices, healthMap, sessionInfo] = await Promise.all([
+    getDevices(),
+    getDeviceHealth(),
+    getSessionInfo(),
+  ]);
   const timeSlotExpiry = getTimeSlotExpiry();
+
+  // Merge device registry with health data
+  const deviceRows: DeviceRow[] = devices.map((d) => {
+    const health = healthMap[d.id];
+    return {
+      id: d.id,
+      name: d.name,
+      city: d.city,
+      notes: d.notes || '',
+      deviceType: health?.deviceType || null,
+      firmwareVersion: health?.firmwareVersion || null,
+      connected: health ? health.connected : null,
+      stale: health?.stale ?? true,
+      lastSeen: health?.timestamp || null,
+    };
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <h1 className="text-2xl font-bold mb-6">HTMLPG Admin</h1>
 
         {/* Test Tools */}
         <div className="mb-8 bg-white shadow-sm rounded-lg p-4">
           <h2 className="text-lg font-semibold mb-3">Test Tools</h2>
-
           <AdminTestTools sessionInfo={sessionInfo} timeSlotExpiry={timeSlotExpiry} intervalSeconds={QR_INTERVAL_SECONDS} />
         </div>
 
@@ -131,65 +134,11 @@ export default async function AdminPage() {
           <AdminFileManager />
         </div>
 
-        {/* Device Status */}
-        <h2 className="text-lg font-semibold mb-3">Device Status</h2>
-        {devices.length === 0 ? (
-          <p className="text-gray-500">No devices have reported in yet.</p>
-        ) : (
-          <table className="w-full border-collapse bg-white shadow-sm rounded-lg overflow-hidden">
-            <thead>
-              <tr className="bg-gray-100 text-left text-sm text-gray-600">
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Device</th>
-                <th className="px-4 py-3">Type</th>
-                <th className="px-4 py-3">Firmware</th>
-                <th className="px-4 py-3">Connection</th>
-                <th className="px-4 py-3">Last Seen</th>
-              </tr>
-            </thead>
-            <tbody>
-              {devices.map((device) => (
-                <tr key={device.deviceId} className="border-t border-gray-100">
-                  <td className="px-4 py-3">
-                    <StatusDot
-                      connected={device.connected}
-                      stale={device.stale}
-                    />
-                  </td>
-                  <td className="px-4 py-3 font-mono text-sm">
-                    {device.deviceId}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-500">
-                    {device.deviceType === "esp32" ? (
-                      <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">ESP32</span>
-                    ) : device.deviceType === "rpi" ? (
-                      <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">RPi</span>
-                    ) : (
-                      <span className="text-gray-400">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 font-mono text-sm">
-                    {device.deviceType === "esp32" && device.firmwareVersion ? (
-                      <span className="text-gray-700">v{device.firmwareVersion}</span>
-                    ) : (
-                      <span className="text-gray-400">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-sm">
-                    {device.stale
-                      ? "Stale"
-                      : device.connected
-                        ? "Connected"
-                        : "Disconnected"}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-500">
-                    {relativeTime(device.timestamp)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+        {/* Devices */}
+        <div className="mb-8 bg-white shadow-sm rounded-lg p-4">
+          <h2 className="text-lg font-semibold mb-3">Devices</h2>
+          <AdminDeviceTable initialDevices={deviceRows} />
+        </div>
       </div>
     </div>
   );

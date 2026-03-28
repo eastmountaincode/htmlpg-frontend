@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { validateSessionValue, SESSION_COOKIE_NAME } from '@/lib/session';
 import { NextResponse } from 'next/server';
-import devices from '@/lib/devices.json';
+import { getDevice, getDevices } from '@/lib/d1';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -10,12 +10,12 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
     // In development, return a mock device so the UI works without a real session
     if (process.env.NODE_ENV === 'development') {
-        const firstDeviceId = Object.keys(devices)[0];
-        const firstDevice = devices[firstDeviceId as keyof typeof devices];
+        const devices = await getDevices();
+        const first = devices[0];
         return NextResponse.json({
-            deviceId: firstDeviceId,
-            name: firstDevice?.name || null,
-            city: firstDevice?.city || null,
+            deviceId: first?.id || null,
+            name: first?.name || null,
+            city: first?.city || null,
         });
     }
 
@@ -33,7 +33,7 @@ export async function GET() {
     }
 
     const deviceId = result.deviceId;
-    const deviceInfo = devices[deviceId as keyof typeof devices];
+    const deviceInfo = await getDevice(deviceId);
 
     return NextResponse.json({
         deviceId,
