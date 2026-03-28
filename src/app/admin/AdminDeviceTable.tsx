@@ -53,6 +53,21 @@ export default function AdminDeviceTable({ initialDevices }: { initialDevices: D
   const [editing, setEditing] = useState<EditingDevice | null>(null);
   const [busy, setBusy] = useState(false);
 
+  const resetCounters = async (deviceId: string) => {
+    if (!confirm('Reset upload and download counters for this device?')) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/admin/devices/${deviceId}`, { method: 'PATCH' });
+      if (res.ok) {
+        setDevices(devices.map(d =>
+          d.id === deviceId ? { ...d, uploads: 0, downloads: 0 } : d
+        ));
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const startEdit = (d: DeviceRow) => {
     setEditing({ id: d.id, name: d.name, city: d.city, notes: d.notes });
   };
@@ -92,6 +107,7 @@ export default function AdminDeviceTable({ initialDevices }: { initialDevices: D
             <th className="px-3 py-2">Firmware</th>
             <th className="px-3 py-2">Uploads</th>
             <th className="px-3 py-2">Downloads</th>
+            <th className="px-3 py-2"></th>
             <th className="px-3 py-2">Last Seen</th>
             <th className="px-3 py-2">Notes</th>
             <th className="px-3 py-2"></th>
@@ -128,6 +144,17 @@ export default function AdminDeviceTable({ initialDevices }: { initialDevices: D
               </td>
               <td className="px-3 py-2 text-center tabular-nums">{d.uploads}</td>
               <td className="px-3 py-2 text-center tabular-nums">{d.downloads}</td>
+              <td className="px-3 py-2">
+                {(d.uploads > 0 || d.downloads > 0) && (
+                  <button
+                    onClick={() => resetCounters(d.id)}
+                    disabled={busy}
+                    className="px-2 py-1 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100 cursor-pointer disabled:opacity-50"
+                  >
+                    Reset
+                  </button>
+                )}
+              </td>
               <td className="px-3 py-2 text-gray-500">
                 {d.lastSeen ? relativeTime(d.lastSeen) : '—'}
               </td>

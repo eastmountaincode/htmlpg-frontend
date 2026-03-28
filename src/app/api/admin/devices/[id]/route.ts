@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDevice, updateDevice, deleteDevice } from "@/lib/d1";
+import { getDevice, updateDevice, deleteDevice, resetCounters } from "@/lib/d1";
 import { ADMIN_COOKIE_NAME, validateAdminCookie } from "@/lib/admin-session";
 import { cookies } from "next/headers";
 
@@ -40,6 +40,25 @@ export async function PUT(
   }
 
   return NextResponse.json({ device });
+}
+
+// PATCH /api/admin/devices/[id]/reset-counters - Reset upload/download counters
+export async function PATCH(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  if (!(await isAdmin())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+  const existing = await getDevice(id);
+  if (!existing) {
+    return NextResponse.json({ error: "Device not found" }, { status: 404 });
+  }
+
+  await resetCounters(id);
+  return NextResponse.json({ success: true });
 }
 
 // DELETE /api/admin/devices/[id] - Delete a device

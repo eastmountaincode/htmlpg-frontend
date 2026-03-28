@@ -120,3 +120,10 @@ export async function incrementDownloads(deviceId: string): Promise<void> {
     [deviceId]
   );
 }
+
+export async function resetCounters(deviceId: string): Promise<void> {
+  await d1Query(
+    "UPDATE devices SET uploads = 0, downloads = 0, updated_at = datetime('now') WHERE id = ?",
+    [deviceId]
+  );
+}
