@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getPusherServer } from "@/lib/pusher";
 import { validateSessionValue, SESSION_COOKIE_NAME } from "@/lib/session";
-import { incrementUploads } from "@/lib/d1";
+import { incrementUploads, recordUpload, getDevice } from "@/lib/d1";
 
 // POST /api/boxes/:box/events - Trigger events for a box
 export async function POST(
@@ -12,7 +12,7 @@ export async function POST(
     const { box } = await params;
 
     try {
-        const { type, fileName, fileSize } = await request.json();
+        const { type, fileName, fileSize, fileType } = await request.json();
 
         if (!type) {
             return NextResponse.json({ error: "Event type is required" }, { status: 400 });
@@ -34,6 +34,15 @@ export async function POST(
                     const result = validateSessionValue(secret, sessionCookie);
                     if (result.valid) {
                         await incrementUploads(result.deviceId);
+                        try {
+                            const device = await getDevice(result.deviceId);
+                            await recordUpload(
+                                fileName || '', fileType || '', fileSize || 0, parseInt(box),
+                                result.deviceId, device?.name || '', device?.city || ''
+                            );
+                        } catch (err) {
+                            console.error("[Events] Failed to record upload transfer:", err);
+                        }
                     }
                 }
             } catch (err) {

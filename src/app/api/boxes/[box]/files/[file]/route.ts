@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { getPusherServer } from "@/lib/pusher";
 import { getR2, R2_BUCKET } from "@/lib/r2";
 import { validateSessionValue, SESSION_COOKIE_NAME } from "@/lib/session";
-import { incrementDownloads } from "@/lib/d1";
+import { incrementDownloads, recordDownload, getDevice } from "@/lib/d1";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -43,6 +43,15 @@ export async function GET(
                 const result = validateSessionValue(secret, sessionCookie);
                 if (result.valid) {
                     await incrementDownloads(result.deviceId);
+                    try {
+                        const device = await getDevice(result.deviceId);
+                        await recordDownload(
+                            file, parseInt(box),
+                            result.deviceId, device?.name || '', device?.city || ''
+                        );
+                    } catch (err) {
+                        console.error("[Download] Failed to record download transfer:", err);
+                    }
                 }
             }
         } catch (err) {
