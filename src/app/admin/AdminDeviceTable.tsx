@@ -120,7 +120,7 @@ export default function AdminDeviceTable({ initialDevices }: { initialDevices: D
               <td className="px-3 py-2">
                 <StatusDot connected={d.connected} stale={d.stale} hasHealth={d.lastSeen !== null} />
               </td>
-              <td className="px-3 py-2 font-mono">{d.id}</td>
+              <td className="px-3 py-2 font-mono min-w-[120px]">{d.id}</td>
               <td className="px-3 py-2 min-w-[160px]">
                 {editing?.id === d.id ? (
                   <input
@@ -156,7 +156,7 @@ export default function AdminDeviceTable({ initialDevices }: { initialDevices: D
                   </button>
                 )}
               </td>
-              <td className="px-3 py-2 text-gray-500">
+              <td className="px-3 py-2 text-gray-500 min-w-[100px]">
                 {d.lastSeen ? relativeTime(d.lastSeen) : '—'}
               </td>
               <td className="px-3 py-2 min-w-[180px]">
