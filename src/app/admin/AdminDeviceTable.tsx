@@ -32,8 +32,8 @@ function StatusDot({ connected, stale, hasHealth }: { connected: boolean | null;
 
 function TypeBadge({ type }: { type: string | null }) {
   if (!type) return <span className="text-gray-400">—</span>;
-  if (type === "esp32" || type === "esp32-s3") {
-    return <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">ESP32</span>;
+  if (type?.startsWith("esp32")) {
+    return <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">{type.toUpperCase()}</span>;
   }
   if (type?.startsWith("rpi")) {
     const label = type === "rpi4b" ? "Raspberry Pi 4B" : "RPi";
@@ -121,21 +121,21 @@ export default function AdminDeviceTable({ initialDevices }: { initialDevices: D
                 <StatusDot connected={d.connected} stale={d.stale} hasHealth={d.lastSeen !== null} />
               </td>
               <td className="px-3 py-2 font-mono">{d.id}</td>
-              <td className="px-3 py-2">
+              <td className="px-3 py-2 min-w-[160px]">
                 {editing?.id === d.id ? (
                   <input
                     value={editing.name}
                     onChange={e => setEditing({ ...editing, name: e.target.value })}
-                    className="border rounded px-2 py-1 w-full text-sm"
+                    className="border rounded px-2 py-1 w-full min-w-[140px] text-sm"
                   />
                 ) : d.name}
               </td>
-              <td className="px-3 py-2">
+              <td className="px-3 py-2 min-w-[120px]">
                 {editing?.id === d.id ? (
                   <input
                     value={editing.city}
                     onChange={e => setEditing({ ...editing, city: e.target.value })}
-                    className="border rounded px-2 py-1 w-full text-sm"
+                    className="border rounded px-2 py-1 w-full min-w-[100px] text-sm"
                   />
                 ) : d.city}
               </td>
@@ -159,13 +159,13 @@ export default function AdminDeviceTable({ initialDevices }: { initialDevices: D
               <td className="px-3 py-2 text-gray-500">
                 {d.lastSeen ? relativeTime(d.lastSeen) : '—'}
               </td>
-              <td className="px-3 py-2">
+              <td className="px-3 py-2 min-w-[180px]">
                 {editing?.id === d.id ? (
                   <textarea
                     value={editing.notes}
                     onChange={e => setEditing({ ...editing, notes: e.target.value })}
-                    className="border rounded px-2 py-1 w-full text-sm resize-none"
-                    rows={2}
+                    className="border rounded px-2 py-1 w-full min-w-[160px] text-sm resize-y"
+                    rows={3}
                   />
                 ) : (
                   <span className="text-gray-500 text-xs whitespace-pre-wrap">{d.notes || '—'}</span>
