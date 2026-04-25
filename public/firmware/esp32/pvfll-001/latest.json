@@ -1,0 +1,6 @@
+{
+  "version": "1.0.1",
+  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/pvfll-001/v1.0.1.bin",
+  "required": false,
+  "releaseNotes": "v1.0.1: Switch from dark mode to light mode (white background, black foreground) to eliminate scan-line artifacts on the 7.5\" V2 e-ink. First OTA delivery for pvfll-001."
+}

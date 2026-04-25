@@ -13,7 +13,8 @@ export async function GET(request: NextRequest) {
   const currentVersion = request.headers.get("x-firmware-version") || "0.0.0";
 
   // Determine device type from device ID prefix
-  const deviceType = deviceId.startsWith("htmlpg-") ? "esp32" : "rpi";
+  const isEsp32 = deviceId.startsWith("htmlpg-") || deviceId.startsWith("pvfll-");
+  const deviceType = isEsp32 ? "esp32" : "rpi";
 
   try {
     // For now, only ESP32 firmware is supported
