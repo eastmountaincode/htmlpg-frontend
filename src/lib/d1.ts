@@ -246,10 +246,19 @@ export async function getTransferDeviceEventDays(): Promise<TransferDeviceEventD
         GROUP BY date(uploaded_at), upload_device_id
       ),
       downloads AS (
-        SELECT date(downloaded_at) AS day, download_device_id AS device_id, COUNT(*) AS count
-        FROM transfers
-        WHERE downloaded_at IS NOT NULL
-        GROUP BY date(downloaded_at), download_device_id
+        SELECT day, device_id, COUNT(*) AS count
+        FROM (
+          SELECT DISTINCT
+            date(downloaded_at) AS day,
+            download_device_id AS device_id,
+            file_name,
+            box_num,
+            strftime('%Y-%m-%d %H:%M', downloaded_at) AS download_minute
+          FROM transfers
+          WHERE downloaded_at IS NOT NULL
+            AND download_device_id IS NOT NULL
+        )
+        GROUP BY day, device_id
       )
     SELECT
       days.day,
