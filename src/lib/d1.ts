@@ -146,6 +146,15 @@ export interface Transfer {
   downloaded_at: string | null;
 }
 
+export interface TransferDeviceEventDay {
+  day: string;
+  device_id: string;
+  device_name: string;
+  device_city: string;
+  uploads: number;
+  downloads: number;
+}
+
 export async function createTransfersTable(): Promise<void> {
   await d1Query(`
     CREATE TABLE IF NOT EXISTS transfers (
@@ -210,4 +219,49 @@ export async function getTransfers(limit: number = 100): Promise<Transfer[]> {
     "SELECT * FROM transfers ORDER BY uploaded_at DESC LIMIT ?",
     [limit]
   );
+}
+
+export async function getTransferDeviceEventDays(): Promise<TransferDeviceEventDay[]> {
+  return d1Query<TransferDeviceEventDay>(`
+    WITH RECURSIVE
+      bounds AS (
+        SELECT MIN(day) AS start_day, MAX(day) AS end_day
+        FROM (
+          SELECT date(uploaded_at) AS day FROM transfers WHERE upload_device_id != 'unknown'
+          UNION ALL
+          SELECT date(downloaded_at) AS day FROM transfers WHERE downloaded_at IS NOT NULL
+        )
+      ),
+      days(day) AS (
+        SELECT start_day FROM bounds WHERE start_day IS NOT NULL
+        UNION ALL
+        SELECT date(day, '+1 day')
+        FROM days, bounds
+        WHERE day < end_day
+      ),
+      uploads AS (
+        SELECT date(uploaded_at) AS day, upload_device_id AS device_id, COUNT(*) AS count
+        FROM transfers
+        WHERE upload_device_id != 'unknown'
+        GROUP BY date(uploaded_at), upload_device_id
+      ),
+      downloads AS (
+        SELECT date(downloaded_at) AS day, download_device_id AS device_id, COUNT(*) AS count
+        FROM transfers
+        WHERE downloaded_at IS NOT NULL
+        GROUP BY date(downloaded_at), download_device_id
+      )
+    SELECT
+      days.day,
+      devices.id AS device_id,
+      devices.name AS device_name,
+      devices.city AS device_city,
+      COALESCE(uploads.count, 0) AS uploads,
+      COALESCE(downloads.count, 0) AS downloads
+    FROM days
+    CROSS JOIN devices
+    LEFT JOIN uploads ON uploads.day = days.day AND uploads.device_id = devices.id
+    LEFT JOIN downloads ON downloads.day = days.day AND downloads.device_id = devices.id
+    ORDER BY days.day, devices.id
+  `);
 }

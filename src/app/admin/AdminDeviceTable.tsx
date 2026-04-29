@@ -157,7 +157,7 @@ export default function AdminDeviceTable({ initialDevices }: { initialDevices: D
                 )}
               </td>
               <td className="px-3 py-2 text-gray-500 min-w-[100px]">
-                {d.lastSeen ? relativeTime(d.lastSeen) : '—'}
+                <span suppressHydrationWarning>{d.lastSeen ? relativeTime(d.lastSeen) : '—'}</span>
               </td>
               <td className="px-3 py-2 min-w-[180px]">
                 {editing?.id === d.id ? (

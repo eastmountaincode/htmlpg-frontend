@@ -111,8 +111,14 @@ export default function Garden({ sessionExpiresAt, shareUrl }: GardenProps) {
                     ❋ ❃ ❁ ❀ ✿
                 </h2>
                 {sessionExpiresAt && <SessionInfo expiresAt={sessionExpiresAt} shareUrl={shareUrl} />}
-                <details className="max-w-sm mx-auto mt-3 text-left">
-                    <summary className="cursor-pointer text-gray-400 text-sm select-none">What is this?</summary>
+                <details className="group max-w-sm mx-auto mt-3 text-left">
+                    <summary className="flex items-center gap-1.5 cursor-pointer text-gray-400 text-sm select-none list-none [&::-webkit-details-marker]:hidden">
+                        <span className="flex size-2.5 items-center justify-center" aria-hidden="true">
+                            <span className="block size-0 border-y-[4px] border-l-[6px] border-y-transparent border-l-gray-400 group-open:hidden" />
+                            <span className="hidden size-0 border-x-[4px] border-t-[6px] border-x-transparent border-t-gray-400 group-open:block" />
+                        </span>
+                        <span>What is this?</span>
+                    </summary>
                     <div className="mt-2 text-sm text-gray-600 space-y-3">
                         <p className="font-bold">What is this?</p>
 
@@ -132,8 +138,12 @@ export default function Garden({ sessionExpiresAt, shareUrl }: GardenProps) {
                         <p>The QR code / URL changes every 30 minutes. This ensures files come from people who were physically present at the location of the HTMLPG device.</p>
                         <p>To upload files from your computer, scan the QR code with your phone, copy the URL, text/email it to yourself, then open it in your browser.</p>
 
-                        <p className="font-bold">Why?</p>
-                        <p>To create serendipity in our lives and in the lives of others.</p>
+                        <p className="pt-2 text-gray-500">
+                            Made by Andrew.{' '}
+                            <a href="https://www.instagram.com/ndrewboylan/" target="_blank" rel="noopener noreferrer" className="underline">
+                                Instagram
+                            </a>
+                        </p>
                     </div>
                 </details>
             </div>

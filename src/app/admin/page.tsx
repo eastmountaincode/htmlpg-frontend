@@ -6,10 +6,11 @@ import { getR2, R2_BUCKET } from "@/lib/r2";
 import { validateSessionValue, SESSION_COOKIE_NAME, getTimeSlotExpiry } from "@/lib/session";
 import { QR_INTERVAL_SECONDS } from "@/lib/qr-token";
 import { cookies } from "next/headers";
-import { getDevices } from "@/lib/d1";
+import { getDevices, getTransferDeviceEventDays } from "@/lib/d1";
 import AdminTestTools from "./AdminTestTools";
 import AdminFileManager from "./AdminFileManager";
 import AdminDeviceTable from "./AdminDeviceTable";
+import AdminDeviceActivityChart from "./AdminDeviceActivityChart";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -96,10 +97,11 @@ export interface DeviceRow {
 }
 
 export default async function AdminPage() {
-  const [devices, healthMap, sessionInfo] = await Promise.all([
+  const [devices, healthMap, sessionInfo, deviceEventDays] = await Promise.all([
     getDevices(),
     getDeviceHealth(),
     getSessionInfo(),
+    getTransferDeviceEventDays(),
   ]);
   const timeSlotExpiry = getTimeSlotExpiry();
 
@@ -142,6 +144,12 @@ export default async function AdminPage() {
         <div className="mb-8 bg-white shadow-sm rounded-lg p-4">
           <h2 className="text-lg font-semibold mb-3">Devices</h2>
           <AdminDeviceTable initialDevices={deviceRows} />
+        </div>
+
+        {/* Activity */}
+        <div className="mb-8 bg-white shadow-sm rounded-lg p-4">
+          <h2 className="text-lg font-semibold mb-3">Device Activity</h2>
+          <AdminDeviceActivityChart data={deviceEventDays} />
         </div>
       </div>
     </div>
