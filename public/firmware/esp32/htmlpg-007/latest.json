@@ -1,0 +1,6 @@
+{
+  "version": "1.0.24",
+  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/htmlpg-007/v1.0.24.bin",
+  "required": false,
+  "releaseNotes": "v1.0.24: htmlpg-007 initial deploy with light-mode theme."
+}
