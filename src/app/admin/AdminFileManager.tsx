@@ -10,6 +10,7 @@ interface BoxFileInfo {
 }
 
 const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'];
+const MAX_PREVIEW_BYTES = 5_000_000;
 
 function isPreviewable(name: string): boolean {
   const ext = name.split('.').pop()?.toLowerCase() || '';
@@ -39,9 +40,9 @@ function getFileType(name: string): string {
 }
 
 function formatSize(bytes: number) {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  if (bytes < 1000) return `${bytes} B`;
+  if (bytes < 1000 * 1000) return `${(bytes / 1000).toFixed(1)} KB`;
+  return `${(bytes / (1000 * 1000)).toFixed(1)} MB`;
 }
 
 export default function AdminFileManager() {
@@ -79,7 +80,13 @@ export default function AdminFileManager() {
 
     for (const boxNumber of [1, 2, 3, 4]) {
       const box = boxes[boxNumber];
-      if (box && !box.empty && box.name && isPreviewable(box.name)) {
+      if (
+        box &&
+        !box.empty &&
+        box.name &&
+        isPreviewable(box.name) &&
+        (box.size || 0) <= MAX_PREVIEW_BYTES
+      ) {
         toFetch.push(boxNumber);
       }
     }
@@ -124,19 +131,12 @@ export default function AdminFileManager() {
 
     setActionInProgress(boxNumber);
     try {
-      const url = `/api/boxes/${boxNumber}/files/${encodeURIComponent(box.name)}?keep=true`;
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`Download failed: ${response.status}`);
-
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = blobUrl;
+      link.href = `/api/boxes/${boxNumber}/files/${encodeURIComponent(box.name)}?keep=true&download=true`;
       link.download = box.name;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      URL.revokeObjectURL(blobUrl);
 
       await fetchAllBoxes();
     } catch (error) {

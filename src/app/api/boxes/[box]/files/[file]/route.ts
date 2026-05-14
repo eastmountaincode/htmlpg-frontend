@@ -1,4 +1,5 @@
 import { GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getPusherServer } from "@/lib/pusher";
@@ -26,8 +27,24 @@ export async function GET(
     const { box, file } = await params;
     const key = `box${box}/${file}`;
     const keep = request.nextUrl.searchParams.get('keep') === 'true';
+    const directDownload = request.nextUrl.searchParams.get('download') === 'true';
 
     try {
+        if (keep && directDownload) {
+            const signedUrl = await getSignedUrl(
+                getR2(),
+                new GetObjectCommand({
+                    Bucket: R2_BUCKET,
+                    Key: key,
+                    ResponseContentDisposition: contentDisposition(file),
+                    ResponseContentType: "application/octet-stream",
+                }),
+                { expiresIn: 300 }
+            );
+
+            return NextResponse.redirect(signedUrl);
+        }
+
         const s3Response = await getR2().send(new GetObjectCommand({ Bucket: R2_BUCKET, Key: key }));
 
         if (!s3Response.Body || typeof s3Response.Body.transformToWebStream !== 'function') {
