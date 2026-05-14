@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from 'react';
 interface BoxFileInfo {
   empty: boolean;
   name?: string;
+  keyId?: string;
   size?: number;
   source?: { name: string | null; city: string | null } | null;
 }
@@ -43,6 +44,11 @@ function formatSize(bytes: number) {
   if (bytes < 1000) return `${bytes} B`;
   if (bytes < 1000 * 1000) return `${(bytes / 1000).toFixed(1)} KB`;
   return `${(bytes / (1000 * 1000)).toFixed(1)} MB`;
+}
+
+function fileApiUrl(boxNumber: number, box: BoxFileInfo, query = '') {
+  if (box.keyId) return `/api/boxes/${boxNumber}/objects/${box.keyId}${query}`;
+  return `/api/boxes/${boxNumber}/files/${encodeURIComponent(box.name || '')}${query}`;
 }
 
 export default function AdminFileManager() {
@@ -102,7 +108,7 @@ export default function AdminFileManager() {
       toFetch.map(async (boxNumber) => {
         const box = boxes[boxNumber];
         try {
-          const res = await fetch(`/api/boxes/${boxNumber}/files/${encodeURIComponent(box.name!)}?keep=true`);
+          const res = await fetch(fileApiUrl(boxNumber, box, '?keep=true'));
           if (res.ok) {
             const rawBlob = await res.blob();
             // Re-create blob with correct MIME type so browser can render it
@@ -132,7 +138,7 @@ export default function AdminFileManager() {
     setActionInProgress(boxNumber);
     try {
       const link = document.createElement('a');
-      link.href = `/api/boxes/${boxNumber}/files/${encodeURIComponent(box.name)}?keep=true&download=true`;
+      link.href = fileApiUrl(boxNumber, box, '?keep=true&download=true');
       link.download = box.name;
       document.body.appendChild(link);
       link.click();
@@ -153,7 +159,7 @@ export default function AdminFileManager() {
 
     setActionInProgress(boxNumber);
     try {
-      const url = `/api/boxes/${boxNumber}/files/${encodeURIComponent(box.name)}`;
+      const url = fileApiUrl(boxNumber, box);
       const response = await fetch(url, { method: 'DELETE' });
       if (!response.ok) throw new Error(`Delete failed: ${response.status}`);
       await fetchAllBoxes();

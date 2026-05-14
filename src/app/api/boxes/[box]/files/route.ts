@@ -2,6 +2,7 @@ import { ListObjectsV2Command, PutObjectCommand, GetObjectCommand } from "@aws-s
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { NextRequest, NextResponse } from "next/server";
 import { getR2, R2_BUCKET } from "@/lib/r2";
+import { createStorageObjectKey, displayNameFromObjectKey, objectKeyToId } from "@/lib/r2-object-keys";
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -43,12 +44,13 @@ export async function GET(
         }
 
         const file = actualFiles[0];
-        const fileName = file.Key?.replace(prefix, "") || "";
+        const objectKey = file.Key || "";
+        let fileName = displayNameFromObjectKey(objectKey, box);
 
         // Try to fetch metadata sidecar
         let source = null;
         try {
-            const metaKey = `${file.Key}.meta.json`;
+            const metaKey = `${objectKey}.meta.json`;
             const metaResponse = await getR2().send(
                 new GetObjectCommand({
                     Bucket: R2_BUCKET,
@@ -59,6 +61,7 @@ export async function GET(
             if (metaBody) {
                 const metadata = JSON.parse(metaBody);
                 source = metadata.source || null;
+                fileName = metadata.originalName || fileName;
             }
         } catch {
             // No metadata file — that's fine, source stays null
@@ -67,6 +70,7 @@ export async function GET(
         return NextResponse.json({
             empty: false,
             name: fileName,
+            keyId: objectKeyToId(objectKey),
             size: file.Size || 0,
             source
         });
@@ -85,7 +89,7 @@ export async function POST(
     const { box } = await params;
 
     try {
-        const { fileName, fileType, metadata } = await request.json();
+        const { fileName, fileType } = await request.json();
 
         if (!fileName || !fileType) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -95,7 +99,7 @@ export async function POST(
             return NextResponse.json({ error: "R2 bucket configuration missing" }, { status: 500 });
         }
 
-        const key = `box${box}/${fileName}`;
+        const key = createStorageObjectKey(box, fileName);
         const metaKey = `${key}.meta.json`;
 
         // Presigned URL for the file

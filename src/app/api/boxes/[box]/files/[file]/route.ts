@@ -1,4 +1,4 @@
-import { GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
@@ -19,13 +19,50 @@ function contentDisposition(filename: string) {
     return `attachment; filename="${asciiSafe}"; filename*=UTF-8''${utf8Encoded}`;
 }
 
+function safeDecodeURIComponent(value: string) {
+    try {
+        return decodeURIComponent(value);
+    } catch {
+        return value;
+    }
+}
+
+async function resolveObjectKey(box: string, file: string) {
+    const prefix = `box${box}/`;
+    const requestedKey = `${prefix}${file}`;
+    const decodedFile = safeDecodeURIComponent(file);
+
+    const listResult = await getR2().send(
+        new ListObjectsV2Command({
+            Bucket: R2_BUCKET,
+            Prefix: prefix,
+        })
+    );
+
+    const object = listResult.Contents?.find((obj) => {
+        if (!obj.Key || obj.Key.endsWith("/") || obj.Key.endsWith(".meta.json")) return false;
+
+        const objectFile = obj.Key.slice(prefix.length);
+        return (
+            obj.Key === requestedKey ||
+            objectFile === file ||
+            objectFile === decodedFile ||
+            safeDecodeURIComponent(objectFile) === file ||
+            safeDecodeURIComponent(objectFile) === decodedFile
+        );
+    });
+
+    return object?.Key || requestedKey;
+}
+
 // GET /api/boxes/:box/files/:file - Stream file download (delete after transfer unless ?keep=true)
 export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ box: string; file: string }> }
 ) {
     const { box, file } = await params;
-    const key = `box${box}/${file}`;
+    const key = await resolveObjectKey(box, file);
+    const downloadName = key.slice(`box${box}/`.length);
     const keep = request.nextUrl.searchParams.get('keep') === 'true';
     const directDownload = request.nextUrl.searchParams.get('download') === 'true';
 
@@ -36,7 +73,7 @@ export async function GET(
                 new GetObjectCommand({
                     Bucket: R2_BUCKET,
                     Key: key,
-                    ResponseContentDisposition: contentDisposition(file),
+                    ResponseContentDisposition: contentDisposition(downloadName),
                     ResponseContentType: "application/octet-stream",
                 }),
                 { expiresIn: 300 }
@@ -63,7 +100,7 @@ export async function GET(
                     try {
                         const device = await getDevice(result.deviceId);
                         await recordDownload(
-                            file, parseInt(box),
+                            downloadName, parseInt(box),
                             result.deviceId, device?.name || '', device?.city || ''
                         );
                     } catch (err) {
@@ -92,7 +129,7 @@ export async function GET(
                             } catch { /* metadata file may not exist */ }
                             await getPusherServer().trigger('garden', 'file-deleted', {
                                 boxNumber: box,
-                                fileName: file
+                                fileName: downloadName
                             });
                         }
                     } catch (err) {
@@ -115,7 +152,7 @@ export async function GET(
 
         const headers = new Headers();
         headers.set("Content-Type", "application/octet-stream");
-        headers.set("Content-Disposition", contentDisposition(file));
+        headers.set("Content-Disposition", contentDisposition(downloadName));
         headers.set("X-Content-Type-Options", "nosniff");
         headers.set("Cache-Control", "no-store");
         headers.set("Accept-Ranges", "bytes");
@@ -135,7 +172,8 @@ export async function DELETE(
     { params }: { params: Promise<{ box: string; file: string }> }
 ) {
     const { box, file } = await params;
-    const key = `box${box}/${file}`;
+    const key = await resolveObjectKey(box, file);
+    const fileName = key.slice(`box${box}/`.length);
 
     try {
         // Delete the file
@@ -154,7 +192,7 @@ export async function DELETE(
 
         await getPusherServer().trigger('garden', 'file-deleted', {
             boxNumber: box,
-            fileName: file
+            fileName
         });
 
         return NextResponse.json({ success: true });

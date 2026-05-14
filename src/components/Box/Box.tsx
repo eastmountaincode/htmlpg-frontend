@@ -13,7 +13,7 @@ interface BoxProps {
 const backgroundColor = 'bg-green-400';
 
 export default function Box({ boxNumber, onRegisterCallback }: BoxProps) {
-    const [boxStatus, setBoxStatus] = useState<{ empty: boolean; name?: string; size?: number; source?: { name?: string; city?: string } | null }>({ empty: true });
+    const [boxStatus, setBoxStatus] = useState<{ empty: boolean; name?: string; keyId?: string; size?: number; source?: { name?: string; city?: string } | null }>({ empty: true });
     const [loading, setLoading] = useState(true);
 
     const fetchBoxStatus = async () => {
@@ -55,7 +55,9 @@ export default function Box({ boxNumber, onRegisterCallback }: BoxProps) {
         if (boxStatus.empty || !boxStatus.name) return;
 
         try {
-            const url = `/api/boxes/${boxNumber}/files/${encodeURIComponent(boxStatus.name)}`;
+            const url = boxStatus.keyId
+                ? `/api/boxes/${boxNumber}/objects/${boxStatus.keyId}`
+                : `/api/boxes/${boxNumber}/files/${encodeURIComponent(boxStatus.name)}`;
             const response = await fetch(url);
 
             if (response.redirected) {
