@@ -1,6 +1,6 @@
 {
-  "version": "1.0.2",
-  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/pvfll-001/v1.0.2.bin",
+  "version": "1.0.9",
+  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/pvfll-001/v1.0.9.bin",
   "required": false,
-  "releaseNotes": "v1.0.2: Two clearScreen cycles at boot to flush ghosting; promote layout sync poll to full refresh once per hour to prevent partial-refresh contrast drift."
+  "releaseNotes": "v1.0.9: Show firmware version on the e-ink boot sequence, matching htmlpg-003/htmlpg-007 behavior."
 }

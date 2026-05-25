@@ -1,0 +1,6 @@
+{
+  "version": "1.0.30",
+  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/htmlpg-008/v1.0.30.bin",
+  "required": false,
+  "releaseNotes": "v1.0.30: Demon mode restores black background with red foreground while keeping only the QR code white background with black modules for scan reliability."
+}

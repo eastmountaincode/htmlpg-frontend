@@ -75,7 +75,7 @@ export default function UploadForm({ boxNumber, uploadDisabled, receiveDisabled,
                 return;
             }
             if (!presignResponse.ok) throw new Error('Failed to get presigned URL');
-            const { url, metaUrl, key } = await presignResponse.json();
+            const { url, metaUrl, key, metaKey } = await presignResponse.json();
 
             setUploading(true);
             setUploadProgress(0);
@@ -109,6 +109,7 @@ export default function UploadForm({ boxNumber, uploadDisabled, receiveDisabled,
             console.log('File uploaded successfully', key);
 
             // Upload metadata sidecar (if we have device info)
+            let uploadedMetaKey: string | undefined;
             if (metaUrl && deviceInfo) {
                 const metadata = {
                     source: {
@@ -122,12 +123,17 @@ export default function UploadForm({ boxNumber, uploadDisabled, receiveDisabled,
                     size: selectedFile.size
                 };
                 
-                await fetch(metaUrl, {
+                const metaResponse = await fetch(metaUrl, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(metadata)
                 });
-                console.log('Metadata uploaded successfully');
+                if (metaResponse.ok) {
+                    uploadedMetaKey = metaKey;
+                    console.log('Metadata uploaded successfully');
+                } else {
+                    console.error('Metadata upload failed', metaResponse.status, metaResponse.statusText);
+                }
             }
 
             const eventResponse = await fetch(`/api/boxes/${boxNumber}/events`, {
@@ -136,7 +142,10 @@ export default function UploadForm({ boxNumber, uploadDisabled, receiveDisabled,
                 body: JSON.stringify({
                     type: 'file-uploaded',
                     fileName: selectedFile.name,
-                    fileSize: selectedFile.size
+                    fileSize: selectedFile.size,
+                    fileType: selectedFile.type || 'application/octet-stream',
+                    key,
+                    metaKey: uploadedMetaKey
                 })
             });
             if (eventResponse.redirected) {

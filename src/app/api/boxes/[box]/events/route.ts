@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getPusherServer } from "@/lib/pusher";
 import { validateSessionValue, SESSION_COOKIE_NAME } from "@/lib/session";
 import { incrementUploads, recordUpload, getDevice } from "@/lib/d1";
+import { archiveUploadedFile } from "@/lib/r2-archive";
 
 // POST /api/boxes/:box/events - Trigger events for a box
 export async function POST(
@@ -12,10 +13,32 @@ export async function POST(
     const { box } = await params;
 
     try {
-        const { type, fileName, fileSize, fileType } = await request.json();
+        const { type, fileName, fileSize, fileType, key, metaKey } = await request.json();
 
         if (!type) {
             return NextResponse.json({ error: "Event type is required" }, { status: 400 });
+        }
+
+        if (type === "file-uploaded" && typeof key === "string") {
+            after(async () => {
+                try {
+                    await archiveUploadedFile({
+                        box,
+                        key,
+                        metaKey: typeof metaKey === "string" ? metaKey : undefined,
+                        fileName: typeof fileName === "string" ? fileName : undefined,
+                        fileType: typeof fileType === "string" ? fileType : undefined,
+                        fileSize: typeof fileSize === "number" ? fileSize : undefined,
+                    });
+                } catch (err) {
+                    console.error("[Archive] Failed to archive uploaded file", {
+                        box,
+                        key,
+                        fileName,
+                        err,
+                    });
+                }
+            });
         }
 
         await getPusherServer().trigger('garden', type, {
