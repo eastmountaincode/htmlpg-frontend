@@ -1,12 +1,45 @@
 import { ListObjectsV2Command, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
+import { getDevice, getDevices } from "@/lib/d1";
 import { getR2, R2_BUCKET } from "@/lib/r2";
 import { createStorageObjectKey, displayNameFromObjectKey, objectKeyToId } from "@/lib/r2-object-keys";
+import { validateSessionValue, SESSION_COOKIE_NAME } from "@/lib/session";
+import { createUploadToken } from "@/lib/upload-token";
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+
+async function getUploadSource() {
+    if (process.env.NODE_ENV === 'development') {
+        const devices = await getDevices();
+        const first = devices[0];
+        if (!first?.id) return null;
+        return {
+            deviceId: first.id,
+            name: first.name || null,
+            city: first.city || null,
+        };
+    }
+
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+    const sessionSecret = process.env.SESSION_SECRET;
+
+    if (!sessionCookie || !sessionSecret) return null;
+
+    const result = validateSessionValue(sessionSecret, sessionCookie);
+    if (!result.valid) return null;
+
+    const device = await getDevice(result.deviceId);
+    return {
+        deviceId: result.deviceId,
+        name: device?.name || null,
+        city: device?.city || null,
+    };
+}
 
 // GET /api/boxes/:box/files - List files in a box (with metadata)
 export async function GET(
@@ -81,7 +114,7 @@ export async function GET(
     }
 }
 
-// POST /api/boxes/:box/files - Get presigned PUT URLs for file + metadata
+// POST /api/boxes/:box/files - Create metadata and get a presigned PUT URL for the file
 export async function POST(
     request: NextRequest,
     { params }: { params: Promise<{ box: string }> }
@@ -89,7 +122,7 @@ export async function POST(
     const { box } = await params;
 
     try {
-        const { fileName, fileType } = await request.json();
+        const { fileName, fileType, fileSize } = await request.json();
 
         if (!fileName || !fileType) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -99,8 +132,29 @@ export async function POST(
             return NextResponse.json({ error: "R2 bucket configuration missing" }, { status: 500 });
         }
 
+        const source = await getUploadSource();
+        if (!source) {
+            return NextResponse.json({ error: "No valid upload session" }, { status: 401 });
+        }
+
         const key = createStorageObjectKey(box, fileName);
         const metaKey = `${key}.meta.json`;
+        const sessionSecret = process.env.SESSION_SECRET;
+
+        await getR2().send(
+            new PutObjectCommand({
+                Bucket: R2_BUCKET,
+                Key: metaKey,
+                ContentType: 'application/json',
+                Body: JSON.stringify({
+                    source,
+                    uploadedAt: new Date().toISOString(),
+                    originalName: fileName,
+                    mimeType: fileType,
+                    size: typeof fileSize === "number" ? fileSize : 0,
+                }),
+            })
+        );
 
         // Presigned URL for the file
         const fileUrl = await getSignedUrl(
@@ -110,26 +164,19 @@ export async function POST(
                 Key: key,
                 ContentType: fileType,
             }),
-            { expiresIn: 120 }
+            { expiresIn: 900 }
         );
 
-        // Presigned URL for the metadata sidecar
-        const metaUrl = await getSignedUrl(
-            getR2(),
-            new PutObjectCommand({
-                Bucket: R2_BUCKET,
-                Key: metaKey,
-                ContentType: 'application/json',
-            }),
-            { expiresIn: 120 }
-        );
+        const uploadToken = sessionSecret
+            ? createUploadToken(sessionSecret, { box, key, deviceId: source.deviceId })
+            : undefined;
 
         return NextResponse.json({ 
             url: fileUrl,       // Keep 'url' for backwards compatibility
             fileUrl,
-            metaUrl,
             key,
-            metaKey
+            metaKey,
+            uploadToken,
         }, { status: 200 });
 
     } catch (err) {

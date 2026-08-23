@@ -4,6 +4,7 @@ import { getPusherServer } from "@/lib/pusher";
 import { validateSessionValue, SESSION_COOKIE_NAME } from "@/lib/session";
 import { incrementUploads, recordUpload, getDevice } from "@/lib/d1";
 import { archiveUploadedFile } from "@/lib/r2-archive";
+import { validateUploadToken } from "@/lib/upload-token";
 
 // POST /api/boxes/:box/events - Trigger events for a box
 export async function POST(
@@ -13,7 +14,7 @@ export async function POST(
     const { box } = await params;
 
     try {
-        const { type, fileName, fileSize, fileType, key, metaKey } = await request.json();
+        const { type, fileName, fileSize, fileType, key, metaKey, uploadToken } = await request.json();
 
         if (!type) {
             return NextResponse.json({ error: "Event type is required" }, { status: 400 });
@@ -50,22 +51,35 @@ export async function POST(
         // Track upload count per device
         if (type === "file-uploaded") {
             try {
+                const secret = process.env.SESSION_SECRET;
+                let uploadDeviceId: string | null = null;
+
                 const cookieStore = await cookies();
                 const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME)?.value;
-                const secret = process.env.SESSION_SECRET;
                 if (sessionCookie && secret) {
                     const result = validateSessionValue(secret, sessionCookie);
                     if (result.valid) {
-                        await incrementUploads(result.deviceId);
-                        try {
-                            const device = await getDevice(result.deviceId);
-                            await recordUpload(
-                                fileName || '', fileType || '', fileSize || 0, parseInt(box),
-                                result.deviceId, device?.name || '', device?.city || ''
-                            );
-                        } catch (err) {
-                            console.error("[Events] Failed to record upload transfer:", err);
-                        }
+                        uploadDeviceId = result.deviceId;
+                    }
+                }
+
+                if (!uploadDeviceId && secret && typeof uploadToken === "string" && typeof key === "string") {
+                    const result = validateUploadToken(secret, uploadToken, { box, key });
+                    if (result.valid) {
+                        uploadDeviceId = result.deviceId;
+                    }
+                }
+
+                if (uploadDeviceId) {
+                    await incrementUploads(uploadDeviceId);
+                    try {
+                        const device = await getDevice(uploadDeviceId);
+                        await recordUpload(
+                            fileName || '', fileType || '', fileSize || 0, parseInt(box),
+                            uploadDeviceId, device?.name || '', device?.city || ''
+                        );
+                    } catch (err) {
+                        console.error("[Events] Failed to record upload transfer:", err);
                     }
                 }
             } catch (err) {

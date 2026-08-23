@@ -1,12 +1,6 @@
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
-
-interface DeviceInfo {
-    deviceId: string;
-    name: string | null;
-    city: string | null;
-}
+import { useRef, useState } from 'react';
 
 interface UploadFormProps {
     boxNumber: number;
@@ -21,21 +15,43 @@ const downloadColor = 'bg-red-400';
 const disabledOpacity = 'opacity-20';
 const MAX_FILE_SIZE = 1024 * 1024 * 100; // 100MB
 
+async function postUploadEvent(boxNumber: number, body: Record<string, unknown>) {
+    let lastResponse: Response | null = null;
+    let lastError: unknown = null;
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+        if (attempt > 0) {
+            await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+        }
+
+        try {
+            lastResponse = await fetch(`/api/boxes/${boxNumber}/events`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+            });
+        } catch (error) {
+            lastError = error;
+            continue;
+        }
+
+        if (lastResponse.redirected || lastResponse.ok || lastResponse.status < 500) {
+            return lastResponse;
+        }
+    }
+
+    if (lastError) {
+        console.error('Upload event request failed', lastError);
+    }
+
+    return lastResponse;
+}
 
 export default function UploadForm({ boxNumber, uploadDisabled, receiveDisabled, onReceive, onUploadComplete }: UploadFormProps) {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [uploading, setUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
-    const [deviceInfo, setDeviceInfo] = useState<DeviceInfo | null>(null);
     const inputRef = useRef<HTMLInputElement | null>(null);
-
-    // Fetch device info on mount
-    useEffect(() => {
-        fetch('/api/session/device')
-            .then(res => res.ok ? res.json() : null)
-            .then(data => setDeviceInfo(data))
-            .catch(() => setDeviceInfo(null));
-    }, []);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0] || null;
@@ -65,6 +81,7 @@ export default function UploadForm({ boxNumber, uploadDisabled, receiveDisabled,
                 body: JSON.stringify({
                     fileName: selectedFile.name,
                     fileType: selectedFile.type || "application/octet-stream",
+                    fileSize: selectedFile.size,
                 }),
                 headers: {
                     'Content-Type': 'application/json',
@@ -74,8 +91,12 @@ export default function UploadForm({ boxNumber, uploadDisabled, receiveDisabled,
                 window.location.href = '/denied';
                 return;
             }
+            if (presignResponse.status === 401) {
+                window.location.href = '/denied';
+                return;
+            }
             if (!presignResponse.ok) throw new Error('Failed to get presigned URL');
-            const { url, metaUrl, key, metaKey } = await presignResponse.json();
+            const { url, key, metaKey, uploadToken } = await presignResponse.json();
 
             setUploading(true);
             setUploadProgress(0);
@@ -108,49 +129,21 @@ export default function UploadForm({ boxNumber, uploadDisabled, receiveDisabled,
 
             console.log('File uploaded successfully', key);
 
-            // Upload metadata sidecar (if we have device info)
-            let uploadedMetaKey: string | undefined;
-            if (metaUrl && deviceInfo) {
-                const metadata = {
-                    source: {
-                        deviceId: deviceInfo.deviceId,
-                        name: deviceInfo.name,
-                        city: deviceInfo.city
-                    },
-                    uploadedAt: new Date().toISOString(),
-                    originalName: selectedFile.name,
-                    mimeType: selectedFile.type || 'application/octet-stream',
-                    size: selectedFile.size
-                };
-                
-                const metaResponse = await fetch(metaUrl, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(metadata)
-                });
-                if (metaResponse.ok) {
-                    uploadedMetaKey = metaKey;
-                    console.log('Metadata uploaded successfully');
-                } else {
-                    console.error('Metadata upload failed', metaResponse.status, metaResponse.statusText);
-                }
-            }
-
-            const eventResponse = await fetch(`/api/boxes/${boxNumber}/events`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    type: 'file-uploaded',
-                    fileName: selectedFile.name,
-                    fileSize: selectedFile.size,
-                    fileType: selectedFile.type || 'application/octet-stream',
-                    key,
-                    metaKey: uploadedMetaKey
-                })
+            const eventResponse = await postUploadEvent(boxNumber, {
+                type: 'file-uploaded',
+                fileName: selectedFile.name,
+                fileSize: selectedFile.size,
+                fileType: selectedFile.type || 'application/octet-stream',
+                key,
+                metaKey,
+                uploadToken,
             });
-            if (eventResponse.redirected) {
+            if (eventResponse?.redirected) {
                 window.location.href = '/denied';
                 return;
+            }
+            if (!eventResponse?.ok) {
+                console.error('Upload event failed', eventResponse?.status, eventResponse?.statusText);
             }
 
             setSelectedFile(null);
