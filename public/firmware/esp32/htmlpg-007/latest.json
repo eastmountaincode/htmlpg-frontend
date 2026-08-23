@@ -1,6 +1,6 @@
 {
-  "version": "1.0.24",
-  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/htmlpg-007/v1.0.24.bin",
+  "version": "1.0.26",
+  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/htmlpg-007/v1.0.26.bin",
   "required": false,
-  "releaseNotes": "v1.0.24: htmlpg-007 initial deploy with light-mode theme."
+  "releaseNotes": "v1.0.26: Align box partial-refresh windows to e-ink byte boundaries to prevent transient side bars."
 }

@@ -1,0 +1,6 @@
+{
+  "version": "1.0.36",
+  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/htmlpg-009/v1.0.36.bin",
+  "required": false,
+  "releaseNotes": "v1.0.36: Runs a one-time impact-recovery black-to-white panel scrub, then resumes the normal HTMLPG-009 boot and light home screen. Also includes the corrected Driver HAT reset sequence."
+}

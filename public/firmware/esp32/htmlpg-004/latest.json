@@ -1,0 +1,6 @@
+{
+  "version": "1.0.1",
+  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/htmlpg-004/v1.0.1.bin",
+  "required": false,
+  "releaseNotes": "v1.0.1: Add per-device OTA manifest and align box partial-refresh windows to e-ink byte boundaries to prevent transient side bars."
+}

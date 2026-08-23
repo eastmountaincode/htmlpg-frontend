@@ -1,6 +1,6 @@
 {
-  "version": "1.0.30",
-  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/htmlpg-008/v1.0.30.bin",
+  "version": "1.0.35",
+  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/htmlpg-008/v1.0.35.bin",
   "required": false,
-  "releaseNotes": "v1.0.30: Demon mode restores black background with red foreground while keeping only the QR code white background with black modules for scan reliability."
+  "releaseNotes": "v1.0.35: Uses a generated Los Angeles 8pt font for the one-line Spanish subtitle to give it a little more breathing room beside the QR code."
 }

@@ -1,0 +1,6 @@
+{
+  "version": "1.0.3",
+  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/htmlpg-010/v1.0.3.bin",
+  "required": false,
+  "releaseNotes": "v1.0.3: ESP32-C6 support for HTMLPG-010 with the corrected DevKitM-1 pinout, HTMLPG-007 black-and-white display behavior, English text, network recovery, and guarded per-device OTA."
+}

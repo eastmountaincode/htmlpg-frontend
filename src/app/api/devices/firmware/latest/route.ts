@@ -7,7 +7,7 @@ export const revalidate = 0;
 const BASE_URL = "https://htmlpg.andrew-boylan.com";
 
 // GET /api/devices/firmware/latest — check for firmware updates
-// Checks per-device firmware first, then falls back to shared
+// Only serves firmware explicitly configured for the requesting device
 export async function GET(request: NextRequest) {
   const deviceId = request.headers.get("x-device-id") || "";
   const currentVersion = request.headers.get("x-firmware-version") || "0.0.0";
@@ -27,19 +27,11 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Try per-device firmware first (e.g. /firmware/esp32/htmlpg-005/latest.json)
-    let response = await fetch(
+    // Require a per-device manifest (e.g. /firmware/esp32/htmlpg-005/latest.json)
+    const response = await fetch(
       `${BASE_URL}/firmware/esp32/${deviceId}/latest.json`,
       { cache: "no-store" }
     );
-
-    // Fall back to shared firmware
-    if (!response.ok) {
-      response = await fetch(
-        `${BASE_URL}/firmware/esp32/latest.json`,
-        { cache: "no-store" }
-      );
-    }
 
     if (!response.ok) {
       return NextResponse.json({
