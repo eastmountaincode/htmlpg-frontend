@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDevice, updateDevice, deleteDevice, resetCounters } from "@/lib/d1";
 import { ADMIN_COOKIE_NAME, validateAdminCookie } from "@/lib/admin-session";
 import { cookies } from "next/headers";
+import { geocodeAddress } from "@/lib/geocode";
 
 export const dynamic = "force-dynamic";
 
@@ -25,16 +26,45 @@ export async function PUT(
 
   const { id } = await params;
   const body = await req.json();
-  const { name, city, notes } = body;
+  const { name, city, notes, address } = body;
 
-  if (!name && !city && notes === undefined) {
+  if (!name && !city && notes === undefined && address === undefined) {
     return NextResponse.json(
-      { error: "At least one field (name, city, notes) is required" },
+      { error: "At least one field (name, city, notes, address) is required" },
       { status: 400 }
     );
   }
 
-  const device = await updateDevice(id, { name, city, notes });
+  const update: {
+    name?: string;
+    city?: string;
+    notes?: string;
+    address?: string;
+    map_lat?: number | null;
+    map_lng?: number | null;
+  } = { name, city, notes };
+
+  if (address !== undefined) {
+    const cleanAddress = String(address).trim();
+    if (cleanAddress) {
+      const geocoded = await geocodeAddress(cleanAddress);
+      if (!geocoded) {
+        return NextResponse.json(
+          { error: "Address could not be found on the map" },
+          { status: 400 }
+        );
+      }
+      update.address = cleanAddress;
+      update.map_lat = geocoded.lat;
+      update.map_lng = geocoded.lng;
+    } else {
+      update.address = "";
+      update.map_lat = null;
+      update.map_lng = null;
+    }
+  }
+
+  const device = await updateDevice(id, update);
   if (!device) {
     return NextResponse.json({ error: "Device not found" }, { status: 404 });
   }

@@ -87,6 +87,9 @@ export interface DeviceRow {
   name: string;
   city: string;
   notes: string;
+  address: string;
+  mapLat: number | null;
+  mapLng: number | null;
   uploads: number;
   downloads: number;
   deviceType: string | null;
@@ -113,6 +116,9 @@ export default async function AdminPage() {
       name: d.name,
       city: d.city,
       notes: d.notes || '',
+      address: d.address || '',
+      mapLat: d.map_lat ?? null,
+      mapLng: d.map_lng ?? null,
       uploads: d.uploads || 0,
       downloads: d.downloads || 0,
       deviceType: health?.deviceType || null,
@@ -122,6 +128,27 @@ export default async function AdminPage() {
       lastSeen: health?.timestamp || null,
     };
   });
+  const registeredIds = new Set(deviceRows.map((d) => d.id));
+
+  for (const health of Object.values(healthMap)) {
+    if (registeredIds.has(health.deviceId)) continue;
+    deviceRows.push({
+      id: health.deviceId,
+      name: health.deviceId,
+      city: '',
+      notes: '',
+      address: '',
+      mapLat: null,
+      mapLng: null,
+      uploads: 0,
+      downloads: 0,
+      deviceType: health.deviceType || null,
+      firmwareVersion: health.firmwareVersion || null,
+      connected: health.connected,
+      stale: health.stale,
+      lastSeen: health.timestamp,
+    });
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">

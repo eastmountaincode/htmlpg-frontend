@@ -3,11 +3,14 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import Box from './Box/Box';
 import SessionCountdown from './SessionCountdown';
+import DeviceMap from './DeviceMap';
 import { getPusherClient } from '@/lib/pusher-client';
+import type { MapDevice } from '@/lib/d1';
 
 interface GardenProps {
     sessionExpiresAt: number | null;
     shareUrl: string | null;
+    mapDevices: MapDevice[];
 }
 
 function SessionInfo({ expiresAt, shareUrl }: { expiresAt: number; shareUrl: string | null }) {
@@ -40,7 +43,7 @@ function SessionInfo({ expiresAt, shareUrl }: { expiresAt: number; shareUrl: str
     );
 }
 
-export default function Garden({ sessionExpiresAt, shareUrl }: GardenProps) {
+export default function Garden({ sessionExpiresAt, shareUrl, mapDevices }: GardenProps) {
     const boxUpdateCallbacks = useRef<{ [boxNumber: number]: () => void }>({});
 
     useEffect(() => {
@@ -137,6 +140,11 @@ export default function Garden({ sessionExpiresAt, shareUrl }: GardenProps) {
                         </ul>
                         <p>The QR code / URL changes every 30 minutes. This ensures files come from people who were physically present at the location of the HTMLPG device.</p>
                         <p>To upload files from your computer, scan the QR code with your phone, copy the URL, text/email it to yourself, then open it in your browser.</p>
+
+                        <div className="border-t border-gray-200 pt-3">
+                            <p className="font-bold">Where are the devices?</p>
+                            <DeviceMap devices={mapDevices} compact />
+                        </div>
 
                         <p className="pt-2 text-gray-500">
                             Made by Andrew.{' '}

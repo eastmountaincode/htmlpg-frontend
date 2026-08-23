@@ -2,13 +2,14 @@ import { cookies, headers } from 'next/headers';
 import { validateSessionValue, SESSION_COOKIE_NAME, getTimeSlotExpiry } from '@/lib/session';
 import { generateQrToken } from '@/lib/qr-token';
 import Garden from '@/components/Garden';
-import { getDevices } from '@/lib/d1';
+import { getDevices, getMapDevices } from '@/lib/d1';
 
 export const dynamic = 'force-dynamic';
 
 export default async function Home() {
     let sessionExpiresAt: number | null = null;
     let shareUrl: string | null = null;
+    const mapDevices = await getMapDevices();
 
     if (process.env.NODE_ENV === 'development') {
         sessionExpiresAt = getTimeSlotExpiry();
@@ -43,7 +44,7 @@ export default async function Home() {
 
     return (
         <div>
-            <Garden sessionExpiresAt={sessionExpiresAt} shareUrl={shareUrl} />
+            <Garden sessionExpiresAt={sessionExpiresAt} shareUrl={shareUrl} mapDevices={mapDevices} />
         </div>
     );
 }

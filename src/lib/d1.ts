@@ -1,8 +1,14 @@
 const CLOUDFLARE_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID!;
 const CLOUDFLARE_D1_API_TOKEN = process.env.CLOUDFLARE_D1_API_TOKEN!;
 const CLOUDFLARE_D1_DATABASE_ID = process.env.CLOUDFLARE_D1_DATABASE_ID!;
+const D1_QUERY_TIMEOUT_MS = parsePositiveInt(process.env.D1_QUERY_TIMEOUT_MS, 5000);
 
 const D1_API_BASE = `https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/d1/database/${CLOUDFLARE_D1_DATABASE_ID}`;
+
+function parsePositiveInt(value: string | undefined, fallback: number) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
 
 interface D1Result<T = Record<string, unknown>> {
   results: T[];
@@ -25,6 +31,9 @@ export async function d1Query<T = Record<string, unknown>>(
   sql: string,
   params: unknown[] = []
 ): Promise<T[]> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), D1_QUERY_TIMEOUT_MS);
+
   const res = await fetch(`${D1_API_BASE}/query`, {
     method: "POST",
     headers: {
@@ -32,7 +41,8 @@ export async function d1Query<T = Record<string, unknown>>(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ sql, params }),
-  });
+    signal: controller.signal,
+  }).finally(() => clearTimeout(timeout));
 
   if (!res.ok) {
     const text = await res.text();
@@ -53,19 +63,45 @@ export interface Device {
   name: string;
   city: string;
   notes: string;
+  address: string;
+  map_lat: number | null;
+  map_lng: number | null;
   uploads: number;
   downloads: number;
   created_at: string;
   updated_at: string;
 }
 
+export interface MapDevice {
+  id: string;
+  name: string;
+  city: string;
+  address: string;
+  lat: number;
+  lng: number;
+}
+
+function logD1ReadFailure(operation: string, err: unknown) {
+  console.error(`[D1] ${operation} failed; returning empty data`, err);
+}
+
 export async function getDevices(): Promise<Device[]> {
-  return d1Query<Device>("SELECT * FROM devices ORDER BY id");
+  try {
+    return await d1Query<Device>("SELECT * FROM devices ORDER BY id");
+  } catch (err) {
+    logD1ReadFailure("getDevices", err);
+    return [];
+  }
 }
 
 export async function getDevice(id: string): Promise<Device | null> {
-  const results = await d1Query<Device>("SELECT * FROM devices WHERE id = ?", [id]);
-  return results[0] ?? null;
+  try {
+    const results = await d1Query<Device>("SELECT * FROM devices WHERE id = ?", [id]);
+    return results[0] ?? null;
+  } catch (err) {
+    logD1ReadFailure(`getDevice(${id})`, err);
+    return null;
+  }
 }
 
 export async function getDevicesMap(): Promise<Record<string, { name: string; city: string }>> {
@@ -77,6 +113,23 @@ export async function getDevicesMap(): Promise<Record<string, { name: string; ci
   return map;
 }
 
+export async function getMapDevices(): Promise<MapDevice[]> {
+  try {
+    return await d1Query<MapDevice>(
+      `SELECT id, name, city, address, map_lat AS lat, map_lng AS lng
+       FROM devices
+       WHERE address IS NOT NULL
+         AND trim(address) != ''
+         AND map_lat IS NOT NULL
+         AND map_lng IS NOT NULL
+       ORDER BY id`
+    );
+  } catch (err) {
+    logD1ReadFailure("getMapDevices", err);
+    return [];
+  }
+}
+
 export async function createDevice(id: string, name: string, city: string): Promise<Device> {
   await d1Query(
     "INSERT INTO devices (id, name, city) VALUES (?, ?, ?)",
@@ -86,13 +139,26 @@ export async function createDevice(id: string, name: string, city: string): Prom
   return device!;
 }
 
-export async function updateDevice(id: string, fields: { name?: string; city?: string; notes?: string }): Promise<Device | null> {
+export async function updateDevice(
+  id: string,
+  fields: {
+    name?: string;
+    city?: string;
+    notes?: string;
+    address?: string;
+    map_lat?: number | null;
+    map_lng?: number | null;
+  }
+): Promise<Device | null> {
   const sets: string[] = [];
   const params: unknown[] = [];
 
   if (fields.name !== undefined) { sets.push("name = ?"); params.push(fields.name); }
   if (fields.city !== undefined) { sets.push("city = ?"); params.push(fields.city); }
   if (fields.notes !== undefined) { sets.push("notes = ?"); params.push(fields.notes); }
+  if (fields.address !== undefined) { sets.push("address = ?"); params.push(fields.address); }
+  if (fields.map_lat !== undefined) { sets.push("map_lat = ?"); params.push(fields.map_lat); }
+  if (fields.map_lng !== undefined) { sets.push("map_lng = ?"); params.push(fields.map_lng); }
 
   if (sets.length === 0) return getDevice(id);
 
@@ -215,62 +281,72 @@ export async function recordDownload(
 }
 
 export async function getTransfers(limit: number = 100): Promise<Transfer[]> {
-  return d1Query<Transfer>(
-    "SELECT * FROM transfers ORDER BY uploaded_at DESC LIMIT ?",
-    [limit]
-  );
+  try {
+    return await d1Query<Transfer>(
+      "SELECT * FROM transfers ORDER BY uploaded_at DESC LIMIT ?",
+      [limit]
+    );
+  } catch (err) {
+    logD1ReadFailure("getTransfers", err);
+    return [];
+  }
 }
 
 export async function getTransferDeviceEventDays(): Promise<TransferDeviceEventDay[]> {
-  return d1Query<TransferDeviceEventDay>(`
-    WITH RECURSIVE
-      bounds AS (
-        SELECT MIN(day) AS start_day, MAX(day) AS end_day
-        FROM (
-          SELECT date(uploaded_at) AS day FROM transfers WHERE upload_device_id != 'unknown'
+  try {
+    return await d1Query<TransferDeviceEventDay>(`
+      WITH RECURSIVE
+        bounds AS (
+          SELECT MIN(day) AS start_day, MAX(day) AS end_day
+          FROM (
+            SELECT date(uploaded_at) AS day FROM transfers WHERE upload_device_id != 'unknown'
+            UNION ALL
+            SELECT date(downloaded_at) AS day FROM transfers WHERE downloaded_at IS NOT NULL
+          )
+        ),
+        days(day) AS (
+          SELECT start_day FROM bounds WHERE start_day IS NOT NULL
           UNION ALL
-          SELECT date(downloaded_at) AS day FROM transfers WHERE downloaded_at IS NOT NULL
-        )
-      ),
-      days(day) AS (
-        SELECT start_day FROM bounds WHERE start_day IS NOT NULL
-        UNION ALL
-        SELECT date(day, '+1 day')
-        FROM days, bounds
-        WHERE day < end_day
-      ),
-      uploads AS (
-        SELECT date(uploaded_at) AS day, upload_device_id AS device_id, COUNT(*) AS count
-        FROM transfers
-        WHERE upload_device_id != 'unknown'
-        GROUP BY date(uploaded_at), upload_device_id
-      ),
-      downloads AS (
-        SELECT day, device_id, COUNT(*) AS count
-        FROM (
-          SELECT DISTINCT
-            date(downloaded_at) AS day,
-            download_device_id AS device_id,
-            file_name,
-            box_num,
-            strftime('%Y-%m-%d %H:%M', downloaded_at) AS download_minute
+          SELECT date(day, '+1 day')
+          FROM days, bounds
+          WHERE day < end_day
+        ),
+        uploads AS (
+          SELECT date(uploaded_at) AS day, upload_device_id AS device_id, COUNT(*) AS count
           FROM transfers
-          WHERE downloaded_at IS NOT NULL
-            AND download_device_id IS NOT NULL
+          WHERE upload_device_id != 'unknown'
+          GROUP BY date(uploaded_at), upload_device_id
+        ),
+        downloads AS (
+          SELECT day, device_id, COUNT(*) AS count
+          FROM (
+            SELECT DISTINCT
+              date(downloaded_at) AS day,
+              download_device_id AS device_id,
+              file_name,
+              box_num,
+              strftime('%Y-%m-%d %H:%M', downloaded_at) AS download_minute
+            FROM transfers
+            WHERE downloaded_at IS NOT NULL
+              AND download_device_id IS NOT NULL
+          )
+          GROUP BY day, device_id
         )
-        GROUP BY day, device_id
-      )
-    SELECT
-      days.day,
-      devices.id AS device_id,
-      devices.name AS device_name,
-      devices.city AS device_city,
-      COALESCE(uploads.count, 0) AS uploads,
-      COALESCE(downloads.count, 0) AS downloads
-    FROM days
-    CROSS JOIN devices
-    LEFT JOIN uploads ON uploads.day = days.day AND uploads.device_id = devices.id
-    LEFT JOIN downloads ON downloads.day = days.day AND downloads.device_id = devices.id
-    ORDER BY days.day, devices.id
-  `);
+      SELECT
+        days.day,
+        devices.id AS device_id,
+        devices.name AS device_name,
+        devices.city AS device_city,
+        COALESCE(uploads.count, 0) AS uploads,
+        COALESCE(downloads.count, 0) AS downloads
+      FROM days
+      CROSS JOIN devices
+      LEFT JOIN uploads ON uploads.day = days.day AND uploads.device_id = devices.id
+      LEFT JOIN downloads ON downloads.day = days.day AND downloads.device_id = devices.id
+      ORDER BY days.day, devices.id
+    `);
+  } catch (err) {
+    logD1ReadFailure("getTransferDeviceEventDays", err);
+    return [];
+  }
 }
