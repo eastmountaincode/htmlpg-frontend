@@ -297,7 +297,12 @@ export async function getTransferDeviceEventDays(): Promise<TransferDeviceEventD
     return await d1Query<TransferDeviceEventDay>(`
       WITH RECURSIVE
         bounds AS (
-          SELECT MIN(day) AS start_day, MAX(day) AS end_day
+          SELECT
+            CASE
+              WHEN MIN(day) IS NULL OR MIN(day) > date('now') THEN date('now')
+              ELSE MIN(day)
+            END AS start_day,
+            date('now') AS end_day
           FROM (
             SELECT date(uploaded_at) AS day FROM transfers WHERE upload_device_id != 'unknown'
             UNION ALL
@@ -305,7 +310,7 @@ export async function getTransferDeviceEventDays(): Promise<TransferDeviceEventD
           )
         ),
         days(day) AS (
-          SELECT start_day FROM bounds WHERE start_day IS NOT NULL
+          SELECT start_day FROM bounds
           UNION ALL
           SELECT date(day, '+1 day')
           FROM days, bounds

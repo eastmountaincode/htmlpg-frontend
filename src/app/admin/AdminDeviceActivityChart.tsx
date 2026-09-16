@@ -76,15 +76,26 @@ function DeviceLineChart({
   activeDeviceIds: string[];
   yMax: number;
 }) {
-  const width = 720;
-  const height = 250;
-  const margin = { top: 22, right: 20, bottom: 40, left: 34 };
+  const width = 920;
+  const height = 270;
+  const margin = { top: 22, right: 20, bottom: 42, left: 34 };
   const chartWidth = width - margin.left - margin.right;
   const chartHeight = height - margin.top - margin.bottom;
   const xStep = days.length > 1 ? chartWidth / (days.length - 1) : 0;
-  const labelEvery = days.length > 28 ? 7 : days.length > 16 ? 3 : 1;
+  const labelEvery = days.length > 120 ? 14 : days.length > 60 ? 7 : days.length > 28 ? 5 : days.length > 16 ? 3 : 1;
+  const lastDayIndex = days.length - 1;
   const gridValues = getNiceTicks(yMax);
   const maxValue = gridValues[gridValues.length - 1] || 1;
+  const visibleDevices = activeDeviceIds.length > 0
+    ? devices.filter((device) => activeDeviceIds.includes(device.id))
+    : devices;
+  const zeroDayIndexes = days.flatMap((day, index) => {
+    const total = visibleDevices.reduce(
+      (sum, device) => sum + (device.values[day]?.[metric] ?? 0),
+      0
+    );
+    return total === 0 ? [index] : [];
+  });
 
   const pointFor = (value: number, index: number) => {
     const x = margin.left + (days.length > 1 ? index * xStep : chartWidth / 2);
@@ -179,8 +190,29 @@ function DeviceLineChart({
           );
         })}
 
+        {zeroDayIndexes.map((index) => {
+          const day = days[index];
+          const { x, y } = pointFor(0, index);
+          return (
+            <circle
+              key={`zero-${metric}-${day}`}
+              cx={x}
+              cy={y}
+              r="3"
+              fill="#ffffff"
+              stroke="#9ca3af"
+              strokeWidth="1.5"
+            >
+              <title>{`${day}: 0 ${metric}`}</title>
+            </circle>
+          );
+        })}
+
         {days.map((day, index) => {
-          if (index % labelEvery !== 0) return null;
+          const isLastDay = index === lastDayIndex;
+          const isRegularLabel = index % labelEvery === 0
+            && lastDayIndex - index >= Math.ceil(labelEvery / 2);
+          if (!isLastDay && !isRegularLabel) return null;
           const x = margin.left + (days.length > 1 ? index * xStep : chartWidth / 2);
           return (
             <g key={day}>
@@ -203,6 +235,7 @@ function DeviceLineChart({
           );
         })}
       </svg>
+      <p className="mt-1 text-xs text-gray-400">Hollow dots mark days with zero {metric}.</p>
     </div>
   );
 }
