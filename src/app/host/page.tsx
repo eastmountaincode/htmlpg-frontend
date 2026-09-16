@@ -44,6 +44,24 @@ export default function HostPage() {
                         <li><span className="font-bold">Keep it plugged in.</span> The device needs power via a standard USB-C cable. That&rsquo;s it.</li>
                         <li><span className="font-bold">Connect it to Wi-Fi.</span> On first setup we&rsquo;ll connect it to your network together. If your Wi-Fi password changes, we&rsquo;ll reconnect it.</li>
                     </ul>
+                    <div className="space-y-2 pt-2">
+                        <h4 className="font-bold">How to connect the device to Wi-Fi</h4>
+                        <video
+                            controls
+                            playsInline
+                            preload="metadata"
+                            poster="/videos/htmlpg-wifi-setup-poster.jpg"
+                            className="w-full rounded-lg border border-gray-200 bg-black"
+                        >
+                            <source src="/videos/htmlpg-wifi-setup.mp4" type="video/mp4" />
+                            <a href="/videos/htmlpg-wifi-setup.mp4" className="underline">
+                                Download the Wi-Fi setup video.
+                            </a>
+                        </video>
+                        <p className="text-xs text-gray-500">
+                            A step-by-step walkthrough for joining the HTMLPG network and connecting the device to the host Wi-Fi.
+                        </p>
+                    </div>
                     <p>There are no buttons to press, nothing to maintain, and no software to install. The device runs itself.</p>
                 </div>
 
