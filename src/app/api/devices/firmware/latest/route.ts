@@ -49,6 +49,7 @@ export async function GET(request: NextRequest) {
       url: meta.url,
       required: meta.required || false,
       releaseNotes: meta.releaseNotes || "",
+      ...(typeof meta.hardwareProfile === "string" && { hardwareProfile: meta.hardwareProfile }),
     });
   } catch (err) {
     console.error("[API] Firmware check error:", err);

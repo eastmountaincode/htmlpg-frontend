@@ -5,6 +5,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { NextRequest, NextResponse } from "next/server";
 import { getR2, R2_BUCKET } from "@/lib/r2";
+import { normalizeDisplayHealth } from "@/lib/display-health";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,7 +24,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { deviceId, connected, timestamp, firmwareVersion, deviceType } = await request.json();
+    const { deviceId, connected, timestamp, firmwareVersion, deviceType, display } = await request.json();
 
     if (!deviceId || typeof connected !== "boolean" || !timestamp) {
       return NextResponse.json(
@@ -33,12 +34,14 @@ export async function POST(request: NextRequest) {
     }
 
     const key = `${HEALTH_PREFIX}${deviceId}.json`;
+    const displayHealth = normalizeDisplayHealth(display);
     const body = JSON.stringify({ 
       deviceId, 
       connected, 
       timestamp,
       ...(firmwareVersion && { firmwareVersion }),
       ...(deviceType && { deviceType }),
+      ...(displayHealth && { display: displayHealth }),
     });
 
     await getR2().send(
