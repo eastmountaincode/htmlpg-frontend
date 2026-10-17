@@ -1,6 +1,8 @@
 {
-  "version": "1.0.36",
-  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/htmlpg-009/v1.0.36.bin",
+  "version": "1.0.50",
+  "url": "https://htmlpg.andrew-boylan.com/firmware/esp32/htmlpg-009/v1.0.50.bin",
   "required": false,
-  "releaseNotes": "v1.0.36: Runs a one-time impact-recovery black-to-white panel scrub, then resumes the normal HTMLPG-009 boot and light home screen. Also includes the corrected Driver HAT reset sequence."
+  "hardwareProfile": "esp32s3-075bn-t42-d2-vendor",
+  "sha256": "dfcba86c62497a9fb5f0889765cd28e172b554ee9f095cffe3a9f9f739081985",
+  "releaseNotes": "Recover from controller timeouts with bounded retries, retain the latest frame, report display errors separately from connectivity, and restore independent OTA checks. Keeps radio-paused refreshes and skips unchanged frames."
 }
